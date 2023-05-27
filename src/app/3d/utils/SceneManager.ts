@@ -1,7 +1,7 @@
 import { AmbientLight, AxesHelper, Color, Scene, WebGLRenderer } from "three";
 import { AssetManager } from "./AssetManager";
 import { IObjectParams, ObjectManager } from "./ObjectManager";
-import { PerspectiveManager, PerspectiveType } from "./PerspectiveManager";
+import { ICameraParams, PerspectiveManager, PerspectiveType } from "./PerspectiveManager";
 
 export interface ISceneManagerOption {
   container: HTMLElement,
@@ -83,6 +83,20 @@ export class SceneManager {
   }
 
   /**
+   * 更新相机
+   */
+  public updateCamera(params: ICameraParams) {
+    this.perspectiveManager.update(params);
+  }
+
+  /**
+   * 移动相机
+   */
+  public moveCamera(params: { x?: number, y?: number, z?: number }) {
+    this.perspectiveManager.move(params);
+  }
+
+  /**
    * 
    * @param name 物体的唯一名称。若不存在，将会根据参数新建一个物体
    * @param params 
@@ -100,10 +114,9 @@ export class SceneManager {
   }
 
   public render() {
-    const { render, renderer, activeScene, perspectiveManager: { camera } } = this;
+    const { renderer, activeScene, perspectiveManager: { camera } } = this;
     if (activeScene && camera) {
       renderer.render( activeScene, camera );
     }
-    requestAnimationFrame( render.bind(this) );
   }
 }

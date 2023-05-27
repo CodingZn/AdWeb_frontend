@@ -3,7 +3,7 @@ import { AssetManager } from "./AssetManager";
 import { IRenderable, Renderable } from "./Renderable";
 
 export interface IObjectParams extends IRenderable {
-  url?: string,
+  url?: string | string[],
   onLoad?: (object: Object3D) => any 
 }
 
@@ -32,28 +32,19 @@ export class ObjectManager {
     if (renderable) {
       return renderable as Renderable;
     }
+    // todo 改造成不同类型
     let newRenderable = new Renderable(params);
     // 加载物体模型，加载完成后回调 onLoad
     if (params?.url) {
-      const url = params.url as string;
+      const url = params.url as string | string[];
+      const self = this;
       this.assetManager
       .get(url)
       .then((object) => {
-        // todo 后续添加纹理等操作
-        const object3D = object as Object3D;
-        if (object3D.isObject3D) {
-          object3D.traverse((child: Object3D) => {
-            if ( (child as Mesh).isMesh ) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-            }
-          });
-        }
-        console.log('load: ', object);
-        newRenderable.add(object);
-        
+        console.log('load', url, object)
+        self.onLoad(newRenderable, object);
         if (params.onLoad) {
-          params.onLoad(object);
+          params.onLoad(object as Object3D);
         }
       })
     }
@@ -76,5 +67,28 @@ export class ObjectManager {
       }
       get(name, newParams);
     })
+  }
+
+  private onLoad(renderable: Renderable, object: Object3D | Object3D[]) {
+    if (Array.isArray(object)) {
+      const objects = object as Object3D[];
+      const self = this;
+      objects.forEach(object => {
+        self.onLoad(renderable, object);
+      })
+    } else {
+      // todo 后续添加纹理等操作
+      const object3D = object as Object3D;
+      if (object3D.isObject3D) {
+        object3D.traverse((child: Object3D) => {
+          if ( (child as Mesh).isMesh ) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+          renderable.add(object);
+        });
+      }
+
+    }
   }
 }
