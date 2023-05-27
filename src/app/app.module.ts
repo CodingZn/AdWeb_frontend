@@ -1,23 +1,27 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { RouterModule } from '@angular/router';
+import { HttpClientModule } from '@angular/common/http';
 
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { TestComponent } from './3d/test/test.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { NotFoundPageComponent } from './not-found/not-found-page/not-found-page.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    TestComponent,
+    NotFoundPageComponent,
   ],
   imports: [
     BrowserModule,
-    RouterModule.forRoot([
-      { path: 'test', component: TestComponent }
-    ])
-  ],
-  exports: [
-    RouterModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+
+    HttpClientModule,
+
+    MatToolbarModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

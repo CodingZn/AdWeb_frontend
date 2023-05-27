@@ -1,0 +1,29 @@
+<form [formGroup]="userRegisterForm" (submit)="onSubmit()">
+    <h2>User Register</h2>
+    <mat-form-field>
+        <mat-label>Username</mat-label>
+        <input form matInput formControlName="username"/>
+    </mat-form-field>
+    <br/>
+    <mat-form-field>
+        <mat-label>Password</mat-label>
+        <input matInput formControlName="password" type="password"/>
+    </mat-form-field>
+    <br/>
+    <mat-form-field>
+        <mat-label>Nickname</mat-label>
+        <input form matInput formControlName="nickname"/>
+    </mat-form-field>
+    <br/>
+    <mat-form-field>
+        <mat-label>Phone</mat-label>
+        <input form matInput formControlName="phone"/>
+    </mat-form-field>
+    <br/>
+    <mat-form-field>
+        <mat-label>Email</mat-label>
+        <input form matInput formControlName="email"/>
+    </mat-form-field>
+    <br/>
+    <button mat-raised-button color="primary" type="submit">Register</button>
+</form>
