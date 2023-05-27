@@ -1,0 +1,16 @@
+<form [formGroup]="userLoginForm" (submit)="onSubmit()">
+    <h2>User Login</h2>
+    <mat-form-field>
+        <mat-label>Username</mat-label>
+        <input form matInput formControlName="username"/>
+    </mat-form-field>
+    <br/>
+    <mat-form-field>
+        <mat-label>Password</mat-label>
+        <input matInput formControlName="password" type="password"/>
+    </mat-form-field>
+    <br/>
+    <button mat-raised-button color="primary" type="submit">Login</button>
+    <br/>
+    <a [routerLink]="['/user-register']"><p>No account? Register Here!</p></a>
+</form>

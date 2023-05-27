@@ -1,0 +1,12 @@
+# programming
+.angular/
+node_modules/
+
+# editors
+.vscode/*
+.history/*
+.editorconfig
+
+# system
+.DS_Store
+Thumbs.db
