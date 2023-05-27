@@ -5,6 +5,7 @@ import { PerspectiveType } from '../utils/PerspectiveManager';
 window.THREE = THREE;
 
 @Component({
+  standalone: true,
   selector: 'app-test',
   templateUrl: './test.component.html',
   styleUrls: ['./test.component.css']
