@@ -1,0 +1,32 @@
+class SceneManager {
+  +objectManager
+  +perspectiveManager
+  +add(renderable)
+  +switchScene(sceneName, { background, ambient, ... })
+  +switchCamera(perspectiveType, { x, y, z, targetX, targetY, targetZ })
+}
+
+class ObjectManager {
+  +assetManager
+  +get(name): Renderable
+}
+
+class AssetManager {
+  +get(urls)
+}
+
+class PerspectiveManager {
+  +getter camera
+  +switch(type, params)
+}
+
+class Renderable {
+  +object
+  +update({ x, y, z, color, width, height, depth, transform, ... })
+  +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
+}
+
+AssetManager --o ObjectManager
+ObjectManager --o SceneManager
+PerspectiveManager --o SceneManager
+Renderable --o ObjectManager

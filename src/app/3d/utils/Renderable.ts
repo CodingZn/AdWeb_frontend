@@ -12,11 +12,13 @@ export interface IRenderable {
 }
 
 export interface ITransformType {
-  translate?: [number, number, number],
   scale?: [number, number, number],
   rotateX?: number,
   rotateY?: number,
   rotateZ?: number,
+  translateX?: number,
+  translateY?: number,
+  translateZ?: number,
 }
 
 export interface IRenderableDefault extends IRenderable {

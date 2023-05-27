@@ -8,40 +8,50 @@ export interface IJoyStickOption {
 
 export class JoyStick {
   private domElement: HTMLElement;
+  private circle: HTMLElement;
+  private container: HTMLElement;
   private maxRadius: number;
   private maxRadiusSquared: number;
   private onMove: ((forward: number, turn: number) => void) | undefined;
   private rotationDamping: number;
   private moveDamping: number;
-  private origin: { left: number, top: number };
+  private origin: { left: number, top: number } = { left: 0, top: 0 };
   private offset: { x: number, y: number } = { x: 0, y: 0 };
 
 	constructor(options: IJoyStickOption){
-    const fragment = document.createDocumentFragment();
 		const circle = document.createElement("div");
-		circle.style.cssText = "position:absolute; bottom:35px; width:80px; height:80px; background:rgba(126, 126, 126, 0.5); border:#444 solid medium; border-radius:50%; left:50%; transform:translateX(-50%);";
+		circle.style.cssText = "position: absolute; bottom:35px; width:80px; height:80px; background:rgba(126, 126, 126, 0.5); border:#444 solid medium; border-radius:50%; left:50%; transform:translateX(-50%);";
 		const thumb = document.createElement("div");
 		thumb.style.cssText = "position: absolute; left: 20px; top: 20px; width: 40px; height: 40px; border-radius: 50%; background: #fff;";
 		circle.appendChild(thumb);
-		fragment.appendChild(circle);
+		this.circle = circle;
+		this.container = options.container || document.body;
 		this.domElement = thumb;
 		this.maxRadius = options.maxRadius || 40;
 		this.maxRadiusSquared = this.maxRadius * this.maxRadius;
 		this.onMove = options.onMove;
-		this.origin = { left: this.domElement.offsetLeft, top: this.domElement.offsetTop };
 		this.rotationDamping = options.rotationDamping || 0.06;
 		this.moveDamping = options.moveDamping || 0.01;
-		if (this.domElement!=undefined){
+		if (this.domElement !== undefined){
 			const joystick = this;
-			if ('ontouchstart' in window){
+			if ('ontouchstart' in window) {
 				this.domElement.addEventListener('touchstart', function(evt){ evt.preventDefault(); joystick.tap(evt); evt.stopPropagation();});
-			}else{
+			} else {
 				this.domElement.addEventListener('mousedown', function(evt){ evt.preventDefault(); joystick.tap(evt); evt.stopPropagation();});
 			}
 		}
 	}
 	
-	getMousePosition(evt: Event){
+	public mount() {
+		this.container.appendChild(this.circle);
+		this.origin = { left: this.domElement.offsetLeft, top: this.domElement.offsetTop };
+	}
+
+	public unmount() {
+		this.container.removeChild(this.circle);
+	}
+
+	private getMousePosition(evt: Event){
     const touchEvt = evt as TouchEvent;
     const mouseEvt = evt as MouseEvent;
 		let clientX = touchEvt.targetTouches ? touchEvt.targetTouches[0].pageX : mouseEvt.clientX;
@@ -49,7 +59,7 @@ export class JoyStick {
 		return { x: clientX, y: clientY };
 	}
 	
-	tap(evt: any){
+	private tap(evt: any){
 		evt = evt || window.event;
 		// get the mouse cursor position at startup:
 		this.offset = this.getMousePosition(evt);
@@ -63,7 +73,7 @@ export class JoyStick {
 		}
 	}
 	
-	move(evt: Event){
+	private move(evt: Event){
 		evt = evt || window.event;
 		const mouse = this.getMousePosition(evt);
 		// calculate the new cursor position:
@@ -90,7 +100,7 @@ export class JoyStick {
 		if (this.onMove !== undefined) this.onMove(forward, turn);
 	}
 	
-	up(evt: Event){
+	private up(evt: Event){
 		if ('ontouchstart' in window) {
 			document.ontouchmove = null;
 			(document as any).touchend = null;

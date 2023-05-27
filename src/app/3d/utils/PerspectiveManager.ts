@@ -1,13 +1,14 @@
 import { Camera, PerspectiveCamera } from "three";
 
 export interface IPerspectiveManagerOption {
+  container?: HTMLElement,
   fov?: number,
   aspect: number,
   near?: number,
   far?: number,
 }
 
-interface IParams {
+export interface ICameraParams {
   x?: number, 
   y?: number,
   z?: number,
@@ -16,7 +17,7 @@ interface IParams {
   targetZ?: number,
 }
 
-interface IState extends IParams {
+interface IState extends ICameraParams {
   x: number, 
   y: number,
   z: number,
@@ -26,6 +27,7 @@ interface IState extends IParams {
 }
 
 const defaultOption: IPerspectiveManagerOption = {
+  container: document.body,
   fov: 75,
   aspect: 1,
   near: 0.1,
@@ -48,41 +50,67 @@ export enum PerspectiveType {
 
 export class PerspectiveManager {
   private options: IPerspectiveManagerOption;
-  private activeCamera: Camera | null;
+  private activeType: PerspectiveType | null = null;
   private cameraMap: Map<PerspectiveType, Camera>;
-  private cameraState: Map<PerspectiveType, IState>;
+  private cameraStateMap: Map<PerspectiveType, IState>;
 
   constructor(options: IPerspectiveManagerOption) {
     this.options = Object.assign(defaultOption, options);
-    this.activeCamera = null;
     this.cameraMap = new Map();
-    this.cameraState = new Map();
+    this.cameraStateMap = new Map();
   }
 
   public get camera() {
-    return this.activeCamera;
+    if (this.activeType === null) {
+      return null;
+    }
+    return this.cameraMap.get(this.activeType);
   }
 
-  public switch(type: PerspectiveType, params?: IParams) {
+  /**
+   * 更新当前相机
+   * @param params 
+   * @returns 
+   */
+  public update(params: ICameraParams) {
+    if (this.activeType === null) {
+      console.warn('No active camera to update!');
+      return;
+    }
+    const oldState = this.cameraStateMap.get(this.activeType) as IState;
+    const state = Object.assign(oldState, params) as IState;
+    const { x, y, z, targetX, targetY, targetZ } = state;
+    const camera = this.camera as Camera;
+    camera.position.set(x, y, z);
+    camera.lookAt(targetX, targetY, targetZ);
+  }
+
+  public move(params: { x?: number, y?: number, z?: number }) {
+    const { x, y, z } = params;
+    x && (this.camera?.translateX(x));
+    y && (this.camera?.translateY(y));
+    z && (this.camera?.translateZ(z));
+  }
+
+  /**
+   * 
+   * @param type 切换相机
+   * @param params 
+   */
+  public switch(type: PerspectiveType, params?: ICameraParams) {
     let camera = this.cameraMap.get(type);
-    const oldState = this.cameraState.get(type);
-    let state: IState;
+    let state: ICameraParams;
     if (camera === undefined) {
       const { fov, aspect, near, far } = this.options;
       // 创建相机和状态
       camera = new PerspectiveCamera(fov, aspect, near, far);     
-      state = Object.assign(defaultParams, params); 
       this.cameraMap.set(type, camera);
-    } else if (params === undefined) {
-      // 维持旧状态
-      state = oldState as IState;
+      state = Object.assign(defaultParams, params); 
+      this.cameraStateMap.set(type, state as IState);
     } else {
-      // 以传入参数为主
-      state = Object.assign(oldState as IState, params);
+      state = params || {};
     }
-    const { x, y, z, targetX, targetY, targetZ } = state;
-    camera.position.set(x, y, z);
-    camera.lookAt(targetX, targetY, targetZ);
-    this.activeCamera = camera;
+    this.activeType = type;
+    this.update(state);
   }
 }
