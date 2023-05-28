@@ -1,6 +1,7 @@
-import { Group, Object3D, Vector3 } from "three";
+import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial } from "three";
 
 export interface IRenderable {
+  name?: string,
   width?: number,
   height?: number,
   depth?: number,
@@ -22,6 +23,7 @@ export interface ITransformType {
 }
 
 export interface IRenderableDefault extends IRenderable {
+  name: string,
   width: number,
   height: number,
   depth: number,
@@ -32,6 +34,7 @@ export interface IRenderableDefault extends IRenderable {
 }
 
 const defaultParams: IRenderableDefault = {
+  name: '',
   x: 0,
   y: 0,
   z: 0,
@@ -43,10 +46,7 @@ const defaultParams: IRenderableDefault = {
 
 export class Renderable {
   public object: Object3D;
- 
-  public static getParams(params: IRenderable) {
-    return Object.assign(defaultParams, params) as IRenderableDefault;
-  }
+  private state: IRenderableDefault = defaultParams;
 
   constructor(params?: IRenderable) {
     this.object = new Group();
@@ -54,8 +54,11 @@ export class Renderable {
   }
 
   public update(params?: IRenderable) {
-    const { x, y, z, width, height, depth, color, transform } = Renderable.getParams(params || {});
+    const newState = Object.assign(this.state, params);
+    const { name, x, y, z, width, height, depth, color, transform } = newState;
+    this.state = newState;
     this.object.position.set(x, y, z);
+    this.object.name = name;
     this.object.traverse(child => {
       // todo 修改子
 
@@ -65,7 +68,6 @@ export class Renderable {
         const args = transform[type as keyof ITransformType];
         const self = this.object[type as keyof Object3D];
         if (Array.isArray(args)) {
-          
           const fn = (self as Vector3).set.bind(self) as (...args: any) => any;        
           fn(...args);
         } else {
@@ -74,10 +76,11 @@ export class Renderable {
         }
       })
     }
+    return this;
   }
 
   public transform(transform: ITransformType) {
-    this.update({ transform });
+    return this.update({ transform });
   }
 
   public add(renderable: Renderable | Object3D) {
@@ -86,5 +89,36 @@ export class Renderable {
     } else {
       this.object.add(renderable as Object3D);
     }
+    return this;
+  }
+
+  public onLoad(resources: any[]) {
+    console.log('onload', resources);
+    const self = this;
+    const objects: Object3D[] = [];
+    let texture: Texture | undefined;
+    resources.forEach((res: any) => {
+      if (res.isObject3D) {
+        objects.push(res);
+      } else if (res.isTexture) {
+        texture = res;
+      }
+    })
+
+    objects.forEach(object => {
+      self.add(object);
+    })
+
+    this.object.traverse((child: Object3D) => {
+      if ( (child as any).isMesh ) {
+        const mesh = child as Mesh;
+        child.castShadow = true;
+        child.receiveShadow = true;
+        if (texture !== undefined) {
+          (mesh.material as MeshBasicMaterial).map = texture;
+        }
+      }
+    });
+    return this;
   }
 }

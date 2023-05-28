@@ -3,7 +3,7 @@ import { Camera, PerspectiveCamera } from "three";
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,
   fov?: number,
-  aspect: number,
+  aspect?: number,
   near?: number,
   far?: number,
 }
@@ -28,10 +28,9 @@ interface IState extends ICameraParams {
 
 const defaultOption: IPerspectiveManagerOption = {
   container: document.body,
-  fov: 75,
-  aspect: 1,
+  fov: 45,
   near: 0.1,
-  far: 1000
+  far: 200000
 }
 
 const defaultParams: IState = {
@@ -56,6 +55,11 @@ export class PerspectiveManager {
 
   constructor(options: IPerspectiveManagerOption) {
     this.options = Object.assign(defaultOption, options);
+    const { container } = this.options;
+    if (this.options.aspect === undefined) {
+      const { width, height } = (container as HTMLElement).getBoundingClientRect();
+      options.aspect = width / height;
+    }
     this.cameraMap = new Map();
     this.cameraStateMap = new Map();
   }
@@ -64,7 +68,7 @@ export class PerspectiveManager {
     if (this.activeType === null) {
       return null;
     }
-    return this.cameraMap.get(this.activeType);
+    return this.cameraMap.get(this.activeType) as Camera;
   }
 
   /**
