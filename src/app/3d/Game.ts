@@ -34,13 +34,21 @@ export class Game {
     this.sceneManager.switchScene('default');
     this.sceneManager.switchCamera(PerspectiveType.BACK);
     
-    const bird = this.sceneManager.add('bird', { url: 'model/bird.obj', x: -10});
-    const bunny = this.sceneManager.add('bunny', { url: 'model/bunny.obj', x: -5});
-    const gumby = this.sceneManager.add('gumby', { url: 'model/gumby.obj', x: 0 });
     const town = this.sceneManager.add('town', { url: 'fbx/town.fbx' });
-    bird.transform({ scale: [10, 10, 10] });
-    bunny.transform({ scale: [10, 10, 10] });
-    gumby.transform({ scale: [0.1, 0.1, 0.1] });
+    const doctor = this.sceneManager.add('doctor', { 
+      url: [
+        'fbx/people/Doctor.fbx',
+        'images/SimplePeople_Doctor_White.png'
+      ]
+    });
+
+    town.transform({ scale: [0.1, 0.1, 0.1] })
+    doctor.transform({ scale: [0.1, 0.1, 0.1], translateZ: -100 })
+    doctor.update({ x: 312, y: 0, z: -17 });
+    this.sceneManager.updateCamera({ x: 312, y: 0, z: -17 });
+
+    (window as any).doctor = doctor;
+    (window as any).town = town;
 
     this.render();
   }

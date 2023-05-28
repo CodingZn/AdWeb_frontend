@@ -1,8 +1,19 @@
-import { Loader,CubeTextureLoader, FileLoader, Object3D } from "three";
+import { Loader, FileLoader, ObjectLoader, TextureLoader, CubeTextureLoader } from "three";
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 export interface ILoader extends Loader {
+  load(
+    url: string, 
+    onLoad?: (...args: any) => any, 
+    onProgress?: (...args: any) => any, 
+    onError?: (...args: any) => any): void;
+  loadAsync(
+    url: string, 
+    onProgress?: (...args: any) => any): Promise<any>;
+}
+
+export interface IBundleLoader extends Loader {
   load(
     urls: string[], 
     onLoad?: (...args: any) => any, 
@@ -30,6 +41,19 @@ function cached(loaderClass: Constructor<Loader>) {
   return loader;
 }
 
+// 资源 url 匹配
+interface Matcher {
+  test: RegExp,
+  use: Constructor<any>
+}
+const LoaderMatcher: Matcher[] = [
+  { test: /(jpg|png|jpeg)$/, use: TextureLoader },
+  { test: /(obj)$/, use: OBJLoader },
+  { test: /(fbx)$/, use: FBXLoader },
+  { test: /(json)$/, use: ObjectLoader },
+  { test: /./, use: FileLoader }
+]
+
 export class AssetManager {
   private assetMap: Map<string, any>;
   private assetsPath: string;
@@ -45,44 +69,54 @@ export class AssetManager {
    * @param loader 
    * @returns 
    */
-  public get(url: string | string[], loader?: Loader) {
+  public get(url: string | string[], loader?: Loader): Promise<any> | Promise<any[]> {
     if (Array.isArray(url)) {
-      if (loader) {
-        const urls = url as string[];
-        return this.loadAssets(urls, loader as ILoader);
-      } else {
-        return Promise.reject('todo 多资源加载暂时需要指定加载器');
+      const promises = [];
+      const urls = url as string[];
+      for (const url of urls) {
+        if (Array.isArray(url)) {
+          // 二维 url 数组，嵌套的视为一组
+          promises.push(this.loadAssets(url as string[]));
+        } else {
+          promises.push(this.get(url, loader));
+        }
       }
+      return Promise.all(promises);
     } else {
-      const res = this.assetMap.get(url);
+      const { assetMap } = this;
+      const res = assetMap.get(url);
       if (res === undefined) {
-        return this.loadAsset(url, loader as ILoader);
+        return this.loadAsset(url, loader as ILoader | undefined).then(res => {
+          assetMap.set(url, res);
+          return res;
+        });
       }
       return Promise.resolve(res);
     }
   }
 
   private loadAsset(url: string, loader?: ILoader) {
-    let newLoader: Loader;
+    let newLoader: ILoader | undefined;
     if (loader === undefined) {
-      if (/(jpg|png|jpeg)$/.test(url)) {
-        newLoader = cached(CubeTextureLoader);
-      } else if (/(obj)$/.test(url)) {
-        newLoader = cached(OBJLoader);
-      } else if (/(fbx)$/.test(url)) {
-        newLoader = cached(FBXLoader);
-      } else {
-        newLoader = cached(FileLoader);
+      for (const { test, use } of LoaderMatcher) {
+        if (test.test(url)) {
+          newLoader = cached(use) as ILoader;
+          break;
+        }
       }
     } else {
       newLoader = loader;
     }
+    if (newLoader === undefined) {
+      return Promise.reject('No loader matches!');
+    }
     newLoader.setPath(this.assetsPath);
-    return (newLoader as ILoader).loadAsync([url]);
+    return newLoader.loadAsync(url);
   }
 
-  private loadAssets(urls: string[], loader: ILoader) {
-    loader.setPath(this.assetsPath);
+  private loadAssets(urls: string[]) {
+    // 只有 CubeTextureLoader 加载多个文件
+    const loader = cached(CubeTextureLoader) as IBundleLoader;
     return loader.loadAsync(urls);
   }
 }

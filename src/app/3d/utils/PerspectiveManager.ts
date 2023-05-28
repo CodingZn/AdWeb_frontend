@@ -28,10 +28,10 @@ interface IState extends ICameraParams {
 
 const defaultOption: IPerspectiveManagerOption = {
   container: document.body,
-  fov: 75,
+  fov: 45,
   aspect: 1,
   near: 0.1,
-  far: 1000
+  far: 200000
 }
 
 const defaultParams: IState = {

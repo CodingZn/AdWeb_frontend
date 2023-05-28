@@ -4,7 +4,7 @@ import { IRenderable, Renderable } from "./Renderable";
 
 export interface IObjectParams extends IRenderable {
   url?: string | string[],
-  onLoad?: (object: Object3D) => any 
+  onLoad?: (resources: any[]) => any 
 }
 
 export interface IObjectManagerOption {
@@ -33,18 +33,22 @@ export class ObjectManager {
       return renderable as Renderable;
     }
     // todo 改造成不同类型
-    let newRenderable = new Renderable(params);
+    let newRenderable = new Renderable(Object.assign(params as IRenderable, { name } as IRenderable));
     // 加载物体模型，加载完成后回调 onLoad
     if (params?.url) {
       const url = params.url as string | string[];
-      const self = this;
       this.assetManager
       .get(url)
-      .then((object) => {
-        console.log('load', url, object)
-        self.onLoad(newRenderable, object);
+      .then((resource) => {
+        let resources: any[] = [];
+        if (Array.isArray(resource)) {
+          resources.push(...resource);
+        } else {
+          resources.push(resource);
+        }
+        newRenderable.onLoad(resources);
         if (params.onLoad) {
-          params.onLoad(object as Object3D);
+          params.onLoad(resources);
         }
       })
     }
@@ -67,28 +71,5 @@ export class ObjectManager {
       }
       get(name, newParams);
     })
-  }
-
-  private onLoad(renderable: Renderable, object: Object3D | Object3D[]) {
-    if (Array.isArray(object)) {
-      const objects = object as Object3D[];
-      const self = this;
-      objects.forEach(object => {
-        self.onLoad(renderable, object);
-      })
-    } else {
-      // todo 后续添加纹理等操作
-      const object3D = object as Object3D;
-      if (object3D.isObject3D) {
-        object3D.traverse((child: Object3D) => {
-          if ( (child as Mesh).isMesh ) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-          renderable.add(object);
-        });
-      }
-
-    }
   }
 }
