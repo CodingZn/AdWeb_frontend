@@ -1,3 +1,3 @@
 export interface CheckUsernameRequest {
-    username: string
+    username: string,
 }

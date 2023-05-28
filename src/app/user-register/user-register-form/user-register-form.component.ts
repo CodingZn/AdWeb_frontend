@@ -6,8 +6,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RegisterRequest } from 'src/app/http/register-request.model';
 import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
-import { CheckUsername, Register } from 'src/app/http/api';
 import { CheckUsernameRequest } from 'src/app/http/check-username-request.model';
+import { mergeMap } from 'rxjs';
+import { RegisterAPI } from 'src/app/http/register-api';
+import { CheckUsernameAPI } from 'src/app/http/check-username-api';
 
 type UserRegisterData = RegisterRequest
 
@@ -68,23 +70,16 @@ export class UserRegisterFormComponent implements OnInit {
       username: this.userRegisterData.username
     };
 
-    new CheckUsername(this.httpClient)
+    new CheckUsernameAPI(this.httpClient)
       .createObservable(checkUsernameRequest)
+      .pipe(
+        mergeMap(() => new RegisterAPI(this.httpClient).createObservable(this.userRegisterData))
+      )
       .subscribe({
         next: () => {
-          // if call check username successfully, do actual register
-          new Register(this.httpClient)
-            .createObservable(this.userRegisterData)
-            .subscribe({
-              next: (registerResponse) => {
-                // register successfully
-                // TODO: do redirect here...
-              },
-
-              error: (err: HttpErrorResponse) => {
-                this.showError.emit(err.message);
-              }
-            });
+          // register successfully
+          // TODO: do redirect here...
+          window.alert('register successfully');
         },
 
         // username conclict or others error

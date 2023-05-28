@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { LoginResponse } from './http/login-response.model';
 import { LoginRequest } from './http/login-request.model';
 import { Subject } from 'rxjs';
-import { Login } from './http/api';
+import { LoginAPI } from './http/login-api';
 
 // local status for the user session service
 enum SessionStatus {
@@ -47,10 +47,10 @@ export class UserSessionService {
 
   login(loginRequest: LoginRequest) {
     // create a subject to multicast values to caller
-    const postTokenSub = new Subject<LoginResponse>();
+    const loginSubject = new Subject<LoginResponse>();
 
     // subscribe to the subject to handle response
-    postTokenSub.subscribe((response: LoginResponse) => {
+    loginSubject.subscribe((response: LoginResponse) => {
       const { token } = response;
 
       // verify token here...
@@ -60,22 +60,16 @@ export class UserSessionService {
     });
 
     // post to get token, and forward the observable to the subject
-    new Login(this.httpClient)
+    new LoginAPI(this.httpClient)
       .createObservable(loginRequest)
       .subscribe({
-        next: (response) => {
-          postTokenSub.next(response as LoginResponse);
-        },
-
-        error: (err: HttpErrorResponse) => {
-          postTokenSub.error(err);
-        },
-
-        complete: () => postTokenSub.complete(),
+        next: (res) => loginSubject.next(res),
+        error: (err) => loginSubject.error(err),
+        complete: () => loginSubject.complete(),
       });
 
     // return an observable to the caller
-    return postTokenSub;
+    return loginSubject;
   }
 
   logout() {
