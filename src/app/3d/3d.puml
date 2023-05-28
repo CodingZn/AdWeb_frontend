@@ -1,6 +1,12 @@
+@startuml Game
+class Game {
+  +sceneManager: SceneManager
+  +objectManager: ObjectManager
+  +perspectiveManager: PerspectiveManager
+  +controlManager: ControlManager
+}
+
 class SceneManager {
-  +objectManager
-  +perspectiveManager
   +add(renderable)
   +switchScene(sceneName, { background, ambient, ... })
   +switchCamera(perspectiveType, { x, y, z, targetX, targetY, targetZ })
@@ -12,7 +18,7 @@ class ObjectManager {
 }
 
 class AssetManager {
-  +get(urls)
+  +get(urls): Promise<any> | Promise<any[]>
 }
 
 class PerspectiveManager {
@@ -20,13 +26,20 @@ class PerspectiveManager {
   +switch(type, params)
 }
 
-class Renderable {
+class ControlManager {
+  +on(camera)
+  +off()
+}
+
+abstract class Renderable {
   +object
   +update({ x, y, z, color, width, height, depth, transform, ... })
   +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
 }
 
 AssetManager --o ObjectManager
-ObjectManager --o SceneManager
-PerspectiveManager --o SceneManager
 Renderable --o ObjectManager
+ObjectManager --o Game
+SceneManager --o Game
+PerspectiveManager --o Game
+ControlManager --o Game

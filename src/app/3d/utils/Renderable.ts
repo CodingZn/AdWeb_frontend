@@ -68,7 +68,6 @@ export class Renderable {
         const args = transform[type as keyof ITransformType];
         const self = this.object[type as keyof Object3D];
         if (Array.isArray(args)) {
-          
           const fn = (self as Vector3).set.bind(self) as (...args: any) => any;        
           fn(...args);
         } else {
