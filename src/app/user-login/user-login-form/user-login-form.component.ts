@@ -59,6 +59,7 @@ export class UserLoginFormComponent implements OnInit {
       next: (response) => {
         // login successfully
         // TODO: do redirect here...
+        window.alert('login successfully');
       },
     
       error: (err: HttpErrorResponse) => {
