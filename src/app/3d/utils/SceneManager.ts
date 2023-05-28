@@ -1,11 +1,8 @@
-import { AmbientLight, AxesHelper, Color, Scene, WebGLRenderer } from "three";
-import { AssetManager } from "./AssetManager";
-import { IObjectParams, ObjectManager } from "./ObjectManager";
-import { ICameraParams, PerspectiveManager, PerspectiveType } from "./PerspectiveManager";
+import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Scene, WebGLRenderer } from "three";
+import { Renderable } from "./Renderable";
 
 export interface ISceneManagerOption {
   container: HTMLElement,
-  assetsPath: string,
   assets?: string[],
 }
 
@@ -17,7 +14,6 @@ export interface ISceneParams {
 
 const defaultOption: ISceneManagerOption = {
   container: document.body,
-  assetsPath: 'assets/',
 }
 
 const defaultParams = {
@@ -32,9 +28,7 @@ export class SceneManager {
   private activeScene: Scene | null;
   private sceneMap: Map<string, Scene>;
   private renderer: WebGLRenderer;
-  private assetManager: AssetManager;
-  private objectManager: ObjectManager;
-  private perspectiveManager: PerspectiveManager;
+  private sun: DirectionalLight;
 
   constructor(options: ISceneManagerOption) {
     this.activeScene = null;
@@ -49,17 +43,29 @@ export class SceneManager {
     this.renderer.setSize( width, height );
     container.appendChild(this.renderer.domElement);
 
-    // init managers
-    this.assetManager = new AssetManager(options);
-    this.objectManager = new ObjectManager({ assetManager: this.assetManager });
-    this.perspectiveManager = new PerspectiveManager({ aspect: width / height });
+    // init sun
+    // todo 目前 sun 不可配置
+    const sun = new DirectionalLight( 0xaaaaaa );
+    sun.position.set( 30, 100, 40 );
+    sun.target.position.set( 0, 0, 0 )
+    sun.castShadow = true;
+    const lightSize = 500;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 500;
+		sun.shadow.camera.left = sun.shadow.camera.bottom = -lightSize;
+		sun.shadow.camera.right = sun.shadow.camera.top = lightSize;
+
+  	sun.shadow.bias = 0.0039;
+  	sun.shadow.mapSize.width = 1024;
+  	sun.shadow.mapSize.height = 1024;
+    this.sun = sun;
   }
 
   /**
    * 切换场景
    * @param name 唯一的场景名称。若不存在则创建一个场景
    */
-  public switchScene(name: string, params?: ISceneParams) {
+  public switch(name: string, params?: ISceneParams) {
     let scene = this.sceneMap.get(name);
     if (scene === undefined) {
       scene = new Scene();
@@ -73,48 +79,29 @@ export class SceneManager {
     axes && (scene.add(new AxesHelper(10000)));
     // 切换
     this.activeScene = scene;
+    this.activeScene.add(this.sun);
   }
 
   /**
-   * 切换相机
-   */
-  public switchCamera(type: PerspectiveType) {
-    this.perspectiveManager.switch(type);
-  }
-
-  /**
-   * 更新相机
-   */
-  public updateCamera(params: ICameraParams) {
-    this.perspectiveManager.update(params);
-  }
-
-  /**
-   * 移动相机
-   */
-  public moveCamera(params: { x?: number, y?: number, z?: number }) {
-    this.perspectiveManager.move(params);
-  }
-
-  /**
-   * 
-   * @param name 物体的唯一名称。若不存在，将会根据参数新建一个物体
-   * @param params 
+   * 将加入场景
+   * @param renderable 
    * @returns 
    */
-  public add(name: string, params?: IObjectParams) {
-    const { activeScene, objectManager } = this;
-    const renderable = objectManager.get(name, params);
+  public add(renderable: Renderable) {
+    const { activeScene } = this;
     if (activeScene === null) {
       console.warn('No scene to add object to!');
     } else {
       activeScene.add(renderable.object);
     }
-    return renderable;
   }
 
-  public render() {
-    const { renderer, activeScene, perspectiveManager: { camera } } = this;
+  /**
+   * 渲染当前场景
+   * @param camera threejs 相机
+   */
+  public render(camera: Camera | null) {
+    const { renderer, activeScene } = this;
     if (activeScene && camera) {
       renderer.render( activeScene, camera );
     }

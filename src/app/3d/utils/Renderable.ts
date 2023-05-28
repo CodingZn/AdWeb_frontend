@@ -77,10 +77,11 @@ export class Renderable {
         }
       })
     }
+    return this;
   }
 
   public transform(transform: ITransformType) {
-    this.update({ transform });
+    return this.update({ transform });
   }
 
   public add(renderable: Renderable | Object3D) {
@@ -89,6 +90,7 @@ export class Renderable {
     } else {
       this.object.add(renderable as Object3D);
     }
+    return this;
   }
 
   public onLoad(resources: any[]) {
@@ -118,5 +120,6 @@ export class Renderable {
         }
       }
     });
+    return this;
   }
 }

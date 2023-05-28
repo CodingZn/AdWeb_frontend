@@ -1,4 +1,3 @@
-import { Mesh, Object3D } from "three";
 import { AssetManager } from "./AssetManager";
 import { IRenderable, Renderable } from "./Renderable";
 
@@ -8,7 +7,7 @@ export interface IObjectParams extends IRenderable {
 }
 
 export interface IObjectManagerOption {
-  assetManager: AssetManager
+  assetsPath: string
 }
 
 export class ObjectManager {
@@ -17,7 +16,7 @@ export class ObjectManager {
 
   constructor(options: IObjectManagerOption) {
     this.objectMap = new Map();
-    this.assetManager = options.assetManager;
+    this.assetManager = new AssetManager(options);
   }
 
   /**
