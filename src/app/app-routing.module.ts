@@ -4,6 +4,7 @@ import { NotFoundPageComponent } from './not-found/not-found-page/not-found-page
 import {HomeComponent} from "./home/home.component";
 import {AppComponent} from "./app.component";
 import {UserinfoComponent} from "./userinfo/userinfo.component";
+import {UserProfileComponent} from "./user-profile/user-profile.component";
 
 
 const routes: Routes = [
@@ -12,6 +13,7 @@ const routes: Routes = [
   { path: '3d-test', loadComponent: () => import('./3d/test/test.component').then((mod) => mod.TestComponent)},
   { path: 'home', component: HomeComponent},
   { path: 'user', component: UserinfoComponent},
+  { path: 'profile', component: UserProfileComponent},
   { path: '**', component: NotFoundPageComponent },
 ];
 

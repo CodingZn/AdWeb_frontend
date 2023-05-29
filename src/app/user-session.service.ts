@@ -12,7 +12,6 @@ enum SessionStatus {
 }
 
 interface TokenPayload {
-  nickname : string;
   id: number;
   exp: number;
   username: string;

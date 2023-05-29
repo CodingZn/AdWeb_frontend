@@ -1,7 +1,7 @@
 import {HTTPCallable, RequestMethod} from "./http-callable";
 import {baseURL} from "./config";
 import {Observable} from "rxjs";
-import {GetUserinfoResponse, PutUserinfoRequest} from "./userinfo.model";
+import {ChooseProfileRequest, GetUserinfoResponse, PutUserinfoRequest} from "./userinfo.model";
 import {HttpClient} from "@angular/common/http";
 import {MessageResponse} from "./message-response.model";
 
@@ -21,6 +21,17 @@ export class PutUserinfoApi implements HTTPCallable<PutUserinfoRequest, MessageR
   createObservable!:(req: any, options?: any)=> Observable<MessageResponse>;
   method = RequestMethod.Put;
   url = `${baseURL}/user/`+this.uid;
+
+  constructor(private httpClient: HttpClient,
+              private uid:string) {
+  }
+}
+
+@HTTPCallable
+export class ChooseProfileApi implements HTTPCallable<ChooseProfileRequest, MessageResponse>{
+  createObservable!:(req: any, options?: any)=> Observable<MessageResponse>;
+  method = RequestMethod.Post;
+  url = `${baseURL}/user/`+this.uid + "/profile";
 
   constructor(private httpClient: HttpClient,
               private uid:string) {

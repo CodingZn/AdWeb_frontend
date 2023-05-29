@@ -15,6 +15,7 @@ import {MatCardModule} from "@angular/material/card";
 import {MatSelectModule} from "@angular/material/select";
 import {MatInputModule} from "@angular/material/input";
 import {ReactiveFormsModule} from "@angular/forms";
+import { UserProfileComponent } from './user-profile/user-profile.component';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import {ReactiveFormsModule} from "@angular/forms";
     NotFoundPageComponent,
     HomeComponent,
     UserinfoComponent,
+    UserProfileComponent,
   ],
     imports: [
         BrowserModule,

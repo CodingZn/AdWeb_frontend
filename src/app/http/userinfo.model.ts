@@ -12,3 +12,7 @@ export interface PutUserinfoRequest {
   phone: string | null;
   email: string | null;
 }
+
+export interface ChooseProfileRequest {
+  profileID: number;
+}
