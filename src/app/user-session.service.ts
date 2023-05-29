@@ -11,18 +11,31 @@ enum SessionStatus {
   Ready = 1,
 }
 
+interface TokenPayload {
+  nickname : string;
+  id: number;
+  exp: number;
+  username: string;
+}
+
 // a local function for token verfication
 const checkToken = (token: string) => {
   try{
     let strings = token.split("."); //截取token，获取载体
     var userinfo = JSON.parse(decodeURIComponent(escape(window.atob(strings[1].replace(/-/g, "+").replace(/_/g, "/")))));
-    console.log(userinfo)
-    return true;
+    let time = new Date();
+    if (userinfo.exp < time.getTime()/1000)
+      return false;
+    // we can get token payload here, and display something
+    // console.log(userinfo)
+
+    return userinfo;
   }
   catch (e) {
     return false;
   }
 }
+
 
 @Injectable({
   providedIn: 'root'
@@ -30,6 +43,8 @@ const checkToken = (token: string) => {
 export class UserSessionService {
   private token: String | null = null;
   private tokenLocalStorageID = 'JWT';
+
+  private tokenInfo: TokenPayload | null = null;
 
   private status: SessionStatus = SessionStatus.NotReady;
 
@@ -39,7 +54,9 @@ export class UserSessionService {
 
     // verify token here...
     if (token != null){
-      if (checkToken(token)) {
+      let result = checkToken(token);
+      if (result) {
+        this.tokenInfo = result;
         this.token = token;
         this.status = SessionStatus.Ready;
       }
@@ -62,6 +79,8 @@ export class UserSessionService {
     localStorage.removeItem(this.tokenLocalStorageID);
 
     this.status = SessionStatus.NotReady;
+
+    this.tokenInfo = null;
   }
 
   login(loginRequest: LoginRequest) {
@@ -73,8 +92,10 @@ export class UserSessionService {
       const { token } = response;
 
       // verify token here...
-      if (checkToken(token)) {
+      let result = checkToken(token);
+      if (result) {
         this.saveToken(token);
+        this.tokenInfo = result;
       }
     });
 
