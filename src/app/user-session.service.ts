@@ -128,4 +128,8 @@ export class UserSessionService {
       'Authorization': this.token
     }
   }
+
+  getTokenInfo(){
+    return this.tokenInfo;
+  }
 }

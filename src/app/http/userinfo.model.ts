@@ -6,3 +6,9 @@ export interface GetUserinfoResponse{
   email: string | null;
   profileID: number;
 }
+
+export interface PutUserinfoRequest {
+  nickname: string;
+  phone: string | null;
+  email: string | null;
+}

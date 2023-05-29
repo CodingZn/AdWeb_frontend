@@ -11,6 +11,10 @@ import { NotFoundPageComponent } from './not-found/not-found-page/not-found-page
 import { HomeComponent } from './home/home.component';
 import {MatButtonModule} from "@angular/material/button";
 import { UserinfoComponent } from './userinfo/userinfo.component';
+import {MatCardModule} from "@angular/material/card";
+import {MatSelectModule} from "@angular/material/select";
+import {MatInputModule} from "@angular/material/input";
+import {ReactiveFormsModule} from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -28,6 +32,10 @@ import { UserinfoComponent } from './userinfo/userinfo.component';
 
         MatToolbarModule,
         MatButtonModule,
+        MatCardModule,
+        MatSelectModule,
+        MatInputModule,
+        ReactiveFormsModule,
     ],
   providers: [],
   bootstrap: [AppComponent]
