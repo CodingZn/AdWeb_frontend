@@ -125,7 +125,7 @@ export class UserSessionService {
     if (this.status == SessionStatus.NotReady) throw Error;
 
     return {
-      'Authorization:': this.token
+      'Authorization': this.token
     }
   }
 }

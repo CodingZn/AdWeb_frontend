@@ -80,7 +80,6 @@ export class UserRegisterFormComponent implements OnInit {
       .subscribe({
         next: () => {
           // register successfully
-          // TODO: do redirect here...
           window.alert('register successfully');
           this.router.navigateByUrl('user-login');
         },
