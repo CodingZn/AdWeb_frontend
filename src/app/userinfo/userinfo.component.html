@@ -1,51 +1,57 @@
-<mat-card>
-  <form [formGroup]="form">
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>id</mat-label>
-        <input matInput disabled [value]="userinfo!.id">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>username</mat-label>
-        <input matInput disabled [value]="userinfo!.username">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>nickname</mat-label>
-        <input matInput [readonly]="!editing" [value]="userinfo!.nickname" formControlName="nickname">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>phone</mat-label>
-        <input matInput [readonly]="!editing" [value]="userinfo!.phone" formControlName="phone">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>email</mat-label>
-        <input matInput [readonly]="!editing" [value]="userinfo!.email" formControlName="email">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content>
-      <mat-form-field>
-        <mat-label>profileID</mat-label>
-        <input matInput disabled [value]="userinfo!.profileID">
-      </mat-form-field>
-    </mat-card-content>
-    <mat-card-content *ngIf="!editing">
+<mat-card [formGroup]="form">
+  <mat-card-content>
+    <mat-card-title>
       <p>
-        <button mat-raised-button (click)="edit()">编辑</button>
+        用户信息管理
       </p>
-    </mat-card-content>
-    <mat-card-content *ngIf="editing">
-      <p>
-        <button mat-raised-button (click)="submit()">提交</button>
-        <button mat-raised-button (click)="cancel()">取消</button>
-      </p>
-    </mat-card-content>
-  </form>
+    </mat-card-title>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>id</mat-label>
+      <input matInput disabled [value]="userinfo!.id">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>username</mat-label>
+      <input matInput disabled [value]="userinfo!.username">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>nickname</mat-label>
+      <input matInput [readonly]="!editing" [value]="userinfo!.nickname" formControlName="nickname">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>phone</mat-label>
+      <input matInput [readonly]="!editing" [value]="userinfo!.phone" formControlName="phone">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>email</mat-label>
+      <input matInput [readonly]="!editing" [value]="userinfo!.email" formControlName="email">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>profileID</mat-label>
+      <input matInput disabled [value]="userinfo!.profileID">
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-content *ngIf="!editing">
+    <p>
+      <button mat-raised-button (click)="edit()">编辑</button>
+    </p>
+  </mat-card-content>
+  <mat-card-content *ngIf="editing">
+    <p>
+      <button mat-raised-button (click)="submit()">提交</button>
+      <button mat-raised-button (click)="cancel()">取消</button>
+    </p>
+  </mat-card-content>
+
 </mat-card>
