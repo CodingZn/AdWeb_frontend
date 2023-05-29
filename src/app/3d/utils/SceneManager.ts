@@ -91,7 +91,7 @@ export class SceneManager {
     const { activeScene } = this;
     if (activeScene === null) {
       console.warn('No scene to add object to!');
-    } else {
+    } else if (renderable.object.parent !== activeScene) {
       activeScene.add(renderable.object);
     }
   }

@@ -44,7 +44,8 @@ const defaultParams: IState = {
 
 // todo 更多机位
 export enum PerspectiveType {
-  BACK
+  BACK,
+  FIXED
 }
 
 export class PerspectiveManager {

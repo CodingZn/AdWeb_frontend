@@ -33,7 +33,7 @@ export interface IRenderableDefault extends IRenderable {
   z: number,
 }
 
-const defaultParams: IRenderableDefault = {
+export const defaultRenderableParams: IRenderableDefault = {
   name: '',
   x: 0,
   y: 0,
@@ -46,7 +46,7 @@ const defaultParams: IRenderableDefault = {
 
 export class Renderable {
   public object: Object3D;
-  private state: IRenderableDefault = defaultParams;
+  private state: IRenderableDefault = defaultRenderableParams;
 
   constructor(params?: IRenderable) {
     this.object = new Group();
