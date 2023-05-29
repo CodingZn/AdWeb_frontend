@@ -10,7 +10,8 @@ import { CheckUsernameRequest } from 'src/app/http/check-username-request.model'
 import { mergeMap } from 'rxjs';
 import { RegisterAPI } from 'src/app/http/register-api';
 import { CheckUsernameAPI } from 'src/app/http/check-username-api';
-import {Router} from "@angular/router";
+import {Router, RouterModule} from '@angular/router';
+
 
 type UserRegisterData = RegisterRequest
 
@@ -28,6 +29,7 @@ type UserRegisterData = RegisterRequest
     MatInputModule,
     MatFormFieldModule,
     MatButtonModule,
+    RouterModule,
   ],
 })
 export class UserRegisterFormComponent implements OnInit {

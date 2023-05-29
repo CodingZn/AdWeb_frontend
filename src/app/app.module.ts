@@ -16,6 +16,7 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatInputModule} from "@angular/material/input";
 import {ReactiveFormsModule} from "@angular/forms";
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import {RouterModule} from '@angular/router';
 
 @NgModule({
   declarations: [
@@ -38,6 +39,7 @@ import { UserProfileComponent } from './user-profile/user-profile.component';
         MatSelectModule,
         MatInputModule,
         ReactiveFormsModule,
+        RouterModule,
     ],
   providers: [],
   bootstrap: [AppComponent]
