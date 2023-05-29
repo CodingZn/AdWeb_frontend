@@ -8,21 +8,27 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NotFoundPageComponent } from './not-found/not-found-page/not-found-page.component';
+import { HomeComponent } from './home/home.component';
+import {MatButtonModule} from "@angular/material/button";
+import { UserinfoComponent } from './userinfo/userinfo.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     NotFoundPageComponent,
+    HomeComponent,
+    UserinfoComponent,
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
 
-    HttpClientModule,
+        HttpClientModule,
 
-    MatToolbarModule,
-  ],
+        MatToolbarModule,
+        MatButtonModule,
+    ],
   providers: [],
   bootstrap: [AppComponent]
 })

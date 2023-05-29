@@ -12,7 +12,17 @@ enum SessionStatus {
 }
 
 // a local function for token verfication
-const checkToken = (token: string) => true;
+const checkToken = (token: string) => {
+  try{
+    let strings = token.split("."); //截取token，获取载体
+    var userinfo = JSON.parse(decodeURIComponent(escape(window.atob(strings[1].replace(/-/g, "+").replace(/_/g, "/")))));
+    console.log(userinfo)
+    return true;
+  }
+  catch (e) {
+    return false;
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +38,16 @@ export class UserSessionService {
     const token = localStorage.getItem(this.tokenLocalStorageID);
 
     // verify token here...
-    if (false) { }
+    if (token != null){
+      if (checkToken(token)) {
+        this.token = token;
+        this.status = SessionStatus.Ready;
+      }
+      else{
+        this.cleanToken();
+      }
+    }
+
   }
 
   private saveToken(token: string) {
