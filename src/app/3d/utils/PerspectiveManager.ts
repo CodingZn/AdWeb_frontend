@@ -102,7 +102,7 @@ export class PerspectiveManager {
    * @param type 切换相机
    * @param params 
    */
-  public switch(type: PerspectiveType, params?: ICameraParams) {
+  public get(type: PerspectiveType, params?: ICameraParams) {
     let camera = this.cameraMap.get(type);
     let state: ICameraParams;
     if (camera === undefined) {
@@ -115,7 +115,17 @@ export class PerspectiveManager {
     } else {
       state = params || {};
     }
-    this.activeType = type;
     this.update(state);
+    return camera;
+  }
+
+  /**
+   * 
+   * @param type 切换相机
+   * @param params 
+   */
+  public switch(type: PerspectiveType, params?: ICameraParams) {
+    this.activeType = type;
+    return this.get(type, params);
   }
 }

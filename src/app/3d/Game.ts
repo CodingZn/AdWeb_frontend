@@ -29,42 +29,22 @@ export class Game {
     const sceneManager = new SceneManager({ container });
     const perspectiveManager = new PerspectiveManager({ container });
     const objectManager = new ObjectManager({ assetsPath: 'assets/' });
-
-    const onMove = this.onMove.bind(this);
-    const controlManager = new ControlManager({ container, onMove });
+    const controlManager = new ControlManager({ container });
 
     // todo
-    // this.sceneManager.switch('default');
-    // this.perspectiveManager.switch(PerspectiveType.BACK);
-    // this.controlManager.on(this.perspectiveManager.camera);
-    
-    // init objects
-    // const town = this.objectManager.get('town', { url: 'fbx/town.fbx' });
-    // const doctor = this.objectManager.get('doctor', { 
-    //   url: [
-    //     'fbx/people/Doctor.fbx',
-    //     'images/SimplePeople_Doctor_White.png'
-    //   ]
-    // });
-    // town.transform({ scale: [0.1, 0.1, 0.1] });
-    // doctor.transform({ scale: [0.1, 0.1, 0.1] })
-    //       .update({ x: 350, y: 0, z: -50 });
-
-    // // add object to scene
-    // this.sceneManager.add(town);
-    // this.sceneManager.add(doctor);
-    // // set camera
-    // this.perspectiveManager.update({ x: 400, y: 0, z: -50 });
-    
-    // for debug
-    // (window as any).doctor = doctor;
-    // (window as any).town = town;
-
     const profileView = new ProfileView({
       sceneManager,
       perspectiveManager,
       objectManager,
       controlManager
+    }).mount();
+
+    profileView.on('save', (profileID: number) => {
+      alert('save: ' + profileID)
+    })
+
+    profileView.on('exit', () => {
+      alert('exit')
     })
 
     this.activeView = profileView;
@@ -79,11 +59,5 @@ export class Game {
     if (this.activeView) this.activeView.render(dt);
     
     requestAnimationFrame( () => self.render() );
-  }
-
-  private onMove(state: IMoveState) {
-    if (this.activeView) {
-      this.activeView.onMove(state);
-    }
   }
 }

@@ -1,15 +1,29 @@
 @startuml Game
 class Game {
+  +views: View[]
+}
+
+abstract class View {
   +sceneManager: SceneManager
   +objectManager: ObjectManager
   +perspectiveManager: PerspectiveManager
   +controlManager: ControlManager
+  +mount()
+  +mount()
+  +unmount()
+  +render(dt)
+  +on()
+  +off()
+  -emit()
+}
+
+class ProfileView {
+
 }
 
 class SceneManager {
   +add(renderable)
-  +switchScene(sceneName, { background, ambient, ... })
-  +switchCamera(perspectiveType, { x, y, z, targetX, targetY, targetZ })
+  +switch(sceneName, { background, ambient, ... })
 }
 
 class ObjectManager {
@@ -23,7 +37,7 @@ class AssetManager {
 
 class PerspectiveManager {
   +getter camera
-  +switch(type, params)
+  +switch(type, { x, y, z, targetX, targetY, targetZ })
 }
 
 class ControlManager {
@@ -37,9 +51,11 @@ abstract class Renderable {
   +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
 }
 
+ProfileView --- View
 AssetManager --o ObjectManager
 Renderable --o ObjectManager
-ObjectManager --o Game
-SceneManager --o Game
-PerspectiveManager --o Game
-ControlManager --o Game
+ObjectManager --o View
+SceneManager --o View
+PerspectiveManager --o View
+ControlManager --o View
+View --> Game

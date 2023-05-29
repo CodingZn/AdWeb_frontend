@@ -15,7 +15,6 @@ export const ProfileMap = [
   'Doctor',
   'BeachBabe',
   'FireFighter',
-  'HouseWife',
   'Robber',
   'Policeman',
   'Prostitute',

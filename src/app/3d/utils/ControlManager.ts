@@ -1,11 +1,22 @@
 import { JoyStick } from "../lib/JoyStick";
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import { Camera } from "three";
-
 export interface IMoveState {
   forward: number,
   right: number,
   up: number,
+}
+
+export interface IControlManagerOption {
+  container?: HTMLElement,
+  showJoyStick?: Boolean,
+  controlPointer?: Boolean,
+}
+
+export const EventType = {
+  move: 'move',
+  mousedown: 'mousedown',
+  mouseup: 'mouseup',
 }
 
 interface IMoveInnerState extends IMoveState {
@@ -13,24 +24,20 @@ interface IMoveInnerState extends IMoveState {
   left: number,
 }
 
-export interface IControlManagerOption {
-  container?: HTMLElement,
-  onMove?: (params: IMoveState) => any
-}
-
 const defaultControlManagerOptions = {
   container: document.body,
-  onMove: (params: IMoveState) => {}
+  showJoyStick: true,
+  controlPointer: true,
 }
 
-interface IDestroyer {
+export interface IDestroyer {
   destory: (...args: any) => any
 }
-interface IEventDispatcher {
+export interface IEventDispatcher {
   addEventListener: (...args: any) => any,
   removeEventListener: (...args: any) => any
 }
-function delegate(el: IEventDispatcher, eventName: string, listener: (e: Event) => any): IDestroyer {
+export function delegate(el: IEventDispatcher, eventName: string, listener: (e: Event) => any): IDestroyer {
   el.addEventListener(eventName, listener);
   const destory = () => el.removeEventListener(eventName, listener);
   (el as any).destory = destory;
@@ -38,51 +45,92 @@ function delegate(el: IEventDispatcher, eventName: string, listener: (e: Event) 
 }
 
 export class ControlManager {
-  private container: HTMLElement;
+  private options: IControlManagerOption;
   private camera: Camera | null = null;
-  private onMove: (state: IMoveState) => any;
+  private mounted: Boolean = false;
+  private onMove: ((state: IMoveState) => any) | undefined;
   private moveState: IMoveInnerState = { forward: 0, right: 0, back: 0, left: 0, up: 0 };
-  private joyStick: JoyStick;
+  public joyStick: JoyStick | null = null;
   private pointerLockControls: PointerLockControls | null = null;
   private destoryers: IDestroyer[] = [];
 
   constructor(options: IControlManagerOption) {
-    const { container, onMove } = Object.assign(defaultControlManagerOptions, options);
-    this.container = container;
-    this.onMove = onMove;
-    this.joyStick = new JoyStick({ 
-      container, 
-      onMove: (forward: number, turn: number) => onMove({ forward, right: turn, up: 0 })
-    });
+    this.options = Object.assign(defaultControlManagerOptions, options);
   }
 
-  public on(camera: Camera | null) {
+  public update(options: IControlManagerOption) {
+    this.options = Object.assign(this.options, options);
+    if (this.mounted) {
+      this.unmount().mount(this.camera, this.onMove);
+    }
+    return this;
+  }
+
+  public mount(camera: Camera | null, onMove?: ((params: IMoveState) => any)) {
     if (camera === null) {
       console.warn('No camera to be controled!');
-      return;
+      return this;
     }
+    if (this.mounted) {
+      console.warn('Controller is mounted!');
+      return this;
+    }
+    this.mounted = true;
     this.camera = camera;
-    this.joyStick.mount();
+    this.onMove = onMove;
+
+    const { container, showJoyStick, controlPointer } = this.options;
+    if (showJoyStick) {
+      this.joyStick = new JoyStick({ 
+        container, 
+        onMove: (forward: number, turn: number) => onMove && onMove({ forward, right: turn, up: 0 })
+      });
+      this.joyStick.mount();
+    }
     if (this.pointerLockControls !== null) {
       (this.pointerLockControls as any).destory();
     }
-    this.pointerLockControls = new PointerLockControls(this.camera, this.container);
+    if (controlPointer) {
+      this.pointerLockControls = new PointerLockControls(this.camera, container);
+    }
     this.bindEvents();
-    this.pointerLockControls.lock();
+    return this;
   }
 
-  public off() {
-    this.joyStick.unmount();
+  public unmount() {
+    if (!this.mounted) {
+      console.warn('Controller is not mounted!');
+      return this;
+    }
+    this.mounted = false;
+    if (this.joyStick !== null) {
+      this.joyStick.unmount();
+    }
     this.destoryers.forEach(destoryer => destoryer.destory());
+    this.destoryers.length = 0;
+    return this;
+  }
+
+  public on(name: string, listener: (e: Event) => any) {
+    let el: IEventDispatcher | undefined;
+    if (/key/.test(name)) {
+      el = window;
+    } else if (/lock/.test(name) && this.options.controlPointer) {
+      el = this.pointerLockControls as IEventDispatcher;
+    } else {
+      el = this.options.container as IEventDispatcher;
+    }
+    const destoryer = delegate(el, name, listener);
+    this.destoryers.push(destoryer);
+    return destoryer;
   }
 
   private bindEvents() {
-    const { container, pointerLockControls, destoryers } = this;
-    destoryers.push(delegate(window, 'keydown', this.onKeyDown.bind(this)));
-    destoryers.push(delegate(window, 'keyup', this.onKeyUp.bind(this)));
-    destoryers.push(delegate(container, 'mousedown', this.onMouseDown.bind(this)));
-    destoryers.push(delegate(pointerLockControls as IEventDispatcher, 'lock', this.onLock.bind(this)));
-    destoryers.push(delegate(pointerLockControls as IEventDispatcher, 'unlock', this.onUnLock.bind(this)));
+    this.on('keydown', this.onKeyDown.bind(this));
+    this.on('keyup', this.onKeyUp.bind(this));
+    this.on('mousedown', this.onMouseDown.bind(this));
+    this.on('lock', this.onLock.bind(this));
+    this.on('unlock', this.onUnLock.bind(this));
   }
 
   private onKeyDown(e: Event) {
@@ -111,17 +159,21 @@ export class ControlManager {
 
   private _onMove() {
     const { onMove, moveState: { forward, back, right, left, up } } = this;
-    onMove({ forward: forward - back, right: right - left, up });
+    onMove && onMove({ forward: forward - back, right: right - left, up });
   }
 
   private onMouseDown(e: Event) {
     this.pointerLockControls?.lock();
-    this.joyStick.unmount();
+    if (this.joyStick !== null) {
+      this.joyStick.unmount();
+    }
   }
 
   private onLock(e: Event) {}
 
   private onUnLock(e: Event) {
-    this.joyStick.mount();
+    if (this.joyStick !== null) {
+      this.joyStick.mount();
+    }
   }
 }
