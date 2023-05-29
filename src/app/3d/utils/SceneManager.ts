@@ -62,10 +62,10 @@ export class SceneManager {
   }
 
   /**
-   * 切换场景
+   * 
    * @param name 唯一的场景名称。若不存在则创建一个场景
    */
-  public switch(name: string, params?: ISceneParams) {
+  public get(name: string, params?: ISceneParams) {
     let scene = this.sceneMap.get(name);
     if (scene === undefined) {
       scene = new Scene();
@@ -77,9 +77,19 @@ export class SceneManager {
     background && (scene.background = new Color(background));
     ambient && (scene.add(new AmbientLight(ambient)));
     axes && (scene.add(new AxesHelper(10000)));
+    return scene;
+  }
+
+  /**
+   * 切换场景
+   * @param name 唯一的场景名称。若不存在则创建一个场景
+   */
+  public switch(name: string, params?: ISceneParams) {
+    let scene = this.get(name, params);
     // 切换
     this.activeScene = scene;
     this.activeScene.add(this.sun);
+    return scene;
   }
 
   /**
@@ -91,7 +101,7 @@ export class SceneManager {
     const { activeScene } = this;
     if (activeScene === null) {
       console.warn('No scene to add object to!');
-    } else {
+    } else if (renderable.object.parent !== activeScene) {
       activeScene.add(renderable.object);
     }
   }

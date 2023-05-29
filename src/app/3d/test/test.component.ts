@@ -14,12 +14,10 @@ window.THREE = THREE;
   styleUrls: ['./test.component.css']
 })
 export class TestComponent implements OnInit {
-  private sceneManager: SceneManager | null = null;
-
   constructor(private ref: ElementRef) {}
 
   ngOnInit(): void {
-    const container = (this.ref.nativeElement as HTMLElement).querySelector('.container') as HTMLElement;
+    const container = document.body;
 
     const game = new Game({ container });
     (window as any).game = game; 

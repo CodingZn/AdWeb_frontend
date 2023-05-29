@@ -25,11 +25,13 @@ export class ObjectManager {
    * @param params 
    * @returns 
    */
-  public get(name: string, params?: IObjectParams) {
+  public get(name: string, params?: IObjectParams, override: boolean = false) {
     const { objectMap } = this;
     let renderable = objectMap.get(name);
-    if (renderable) {
-      return renderable as Renderable;
+    if (renderable && !override) {
+      if (!override) {
+        return renderable as Renderable;
+      }
     }
     // todo 改造成不同类型
     let newRenderable = new Renderable(Object.assign(params as IRenderable, { name } as IRenderable));
