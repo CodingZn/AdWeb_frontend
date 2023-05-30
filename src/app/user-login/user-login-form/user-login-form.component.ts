@@ -8,7 +8,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { UserSessionService } from 'src/app/user-session.service';
 import { LoginRequest } from 'src/app/http/login-request.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import {Router, RouterModule} from '@angular/router';
 
 // just a local type alias
 type UserLoginData = LoginRequest;
@@ -22,7 +22,7 @@ type UserLoginData = LoginRequest;
   imports: [
     ReactiveFormsModule,
     RouterModule,
-    
+
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
@@ -43,7 +43,8 @@ export class UserLoginFormComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private userSessionService: UserSessionService) { }
+    private userSessionService: UserSessionService,
+    private router: Router) { }
 
   ngOnInit(): void {
     // subscribe to values changae of the form
@@ -60,10 +61,12 @@ export class UserLoginFormComponent implements OnInit {
         // login successfully
         // TODO: do redirect here...
         window.alert('login successfully');
+
+        this.router.navigateByUrl('home');
       },
-    
+
       error: (err: HttpErrorResponse) => {
-        this.showError.emit(err.message);
+        this.showError.emit(err.error.message);
       }
     });
   }

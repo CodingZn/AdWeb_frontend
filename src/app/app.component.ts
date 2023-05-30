@@ -16,9 +16,13 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     // if not logged in, redirect to login
-    // todo 开发阶段先放行
-    // if(!this.userSessionSerivce.getIsReady()) {
-    //   this.router.navigate(['user-login']);
-    // }
+    // 开发阶段先放行
+    // 增加个人主页
+    if(!this.userSessionSerivce.getIsReady()) {
+      this.router.navigate(['user-login']);
+    }
+    else{
+      this.router.navigate(['home']);
+    }
   }
 }

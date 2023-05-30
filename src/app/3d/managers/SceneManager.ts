@@ -116,4 +116,8 @@ export class SceneManager {
       renderer.render( activeScene, camera );
     }
   }
+
+  public destory() {
+    this.options.container.removeChild(this.renderer.domElement);
+  }
 }

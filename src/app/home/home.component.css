@@ -1,0 +1,8 @@
+p{
+  display: flex;
+  flex-direction: column;
+  margin: 4rem 2rem;
+}
+button{
+  min-height: 3rem;
+}

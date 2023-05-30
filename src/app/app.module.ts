@@ -8,21 +8,39 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { NotFoundPageComponent } from './not-found/not-found-page/not-found-page.component';
+import { HomeComponent } from './home/home.component';
+import {MatButtonModule} from "@angular/material/button";
+import { UserinfoComponent } from './userinfo/userinfo.component';
+import {MatCardModule} from "@angular/material/card";
+import {MatSelectModule} from "@angular/material/select";
+import {MatInputModule} from "@angular/material/input";
+import {ReactiveFormsModule} from "@angular/forms";
+import { UserProfileComponent } from './user-profile/user-profile.component';
+import {RouterModule} from '@angular/router';
 
 @NgModule({
   declarations: [
     AppComponent,
     NotFoundPageComponent,
+    HomeComponent,
+    UserinfoComponent,
+    UserProfileComponent,
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
 
-    HttpClientModule,
+        HttpClientModule,
 
-    MatToolbarModule,
-  ],
+        MatToolbarModule,
+        MatButtonModule,
+        MatCardModule,
+        MatSelectModule,
+        MatInputModule,
+        ReactiveFormsModule,
+        RouterModule,
+    ],
   providers: [],
   bootstrap: [AppComponent]
 })
