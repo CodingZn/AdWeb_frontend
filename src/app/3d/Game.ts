@@ -1,8 +1,8 @@
-import { Camera, Clock } from "three";
-import { ControlManager, IMoveState } from "./utils/ControlManager";
-import { ObjectManager } from "./utils/ObjectManager";
-import { PerspectiveManager, PerspectiveType } from "./utils/PerspectiveManager";
-import { SceneManager } from "./utils/SceneManager"
+import { Clock } from "three";
+import { ControlManager, IMoveState } from "./managers/ControlManager";
+import { ObjectManager } from "./managers/ObjectManager";
+import { PerspectiveManager } from "./managers/PerspectiveManager";
+import { SceneManager } from "./managers/SceneManager"
 import { ProfileView } from "./views/ProfileView";
 import { View } from "./views/View";
 
@@ -19,7 +19,6 @@ export class Game {
   private activeView: View | null = null;
   
   private clock: Clock = new Clock();
-  private moveState: IMoveState = { forward: 0, right: 0, up: 0 };
   
   constructor(option: IGameOption) {
     this.option = Object.assign(defaultOption, option);

@@ -1,19 +1,19 @@
 import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial } from "three";
 
-export interface IRenderable {
+export interface Position { 
+  x?: number, 
+  y?: number, 
+  z?: number 
+}
+export interface IRenderable extends Position {
   name?: string,
-  width?: number,
-  height?: number,
-  depth?: number,
   color?: string,
-  x?: number,
-  y?: number,
-  z?: number,
-  transform?: ITransformType
 }
 
 export interface ITransformType {
-  scale?: [number, number, number],
+  scaleX?: number,
+  scaleY?: number,
+  scaleZ?: number,
   rotateX?: number,
   rotateY?: number,
   rotateZ?: number,
@@ -22,15 +22,12 @@ export interface ITransformType {
   translateZ?: number,
 }
 
-export interface IRenderableDefault extends IRenderable {
+export interface IRenderableDefault extends IRenderable, Position {
   name: string,
-  width: number,
-  height: number,
-  depth: number,
   color: string,
-  x: number,
-  y: number,
-  z: number,
+  x: number, 
+  y: number, 
+  z: number 
 }
 
 export const defaultRenderableParams: IRenderableDefault = {
@@ -38,49 +35,48 @@ export const defaultRenderableParams: IRenderableDefault = {
   x: 0,
   y: 0,
   z: 0,
-  width: 0,
-  height: 0,
-  depth: 0,
   color: '#ffffff',
 }
 
 export class Renderable {
   public object: Object3D;
-  private state: IRenderableDefault = defaultRenderableParams;
+  protected state: IRenderableDefault = defaultRenderableParams;
 
   constructor(params?: IRenderable) {
     this.object = new Group();
-    this.update(params);
+    if (params !== undefined) {
+      this.update(params);
+    }
   }
 
-  public update(params?: IRenderable) {
-    const newState = Object.assign(this.state, params);
-    const { name, x, y, z, width, height, depth, color, transform } = newState;
-    this.state = newState;
-    this.object.position.set(x, y, z);
-    this.object.name = name;
-    this.object.traverse(child => {
-      // todo 修改子
+  
 
-    })
-    if (transform !== undefined) {
-      Object.keys(transform).forEach(type => {
-        const args = transform[type as keyof ITransformType];
-        const self = this.object[type as keyof Object3D];
-        if (Array.isArray(args)) {
-          const fn = (self as Vector3).set.bind(self) as (...args: any) => any;        
-          fn(...args);
-        } else {
-          const fn = (self as (arg: any) => any).bind(this.object);
-          fn(args);
-        }
-      })
-    }
-    return this;
+  public update(params: IRenderable) {
+    return this._update(params);
   }
 
   public transform(transform: ITransformType) {
-    return this.update({ transform });
+    Object.keys(transform).forEach(type => {
+      const arg = transform[type as keyof ITransformType] as number;
+      let fn;
+      if (this.object[type as keyof Object3D] !== undefined) {
+        fn = (this.object[type as keyof Object3D] as (arg: number) => any);
+        fn = fn.bind(this.object);
+        fn(arg);
+      } else {
+        return;
+      }
+    })
+    // 特殊处理 scale
+    const scale = new Vector3().copy(this.object.scale);
+    for (let d of ['x', 'y', 'z']) {
+      let v = transform[`scale${d.toUpperCase()}` as keyof ITransformType];
+      if (v === undefined) v = 1;
+      const vold = scale[d as keyof Vector3] as number;
+      scale[d as keyof Position] = v * vold;
+    }
+    this.object.scale.copy(scale);
+    return this;
   }
 
   public add(renderable: Renderable | Object3D) {
@@ -119,6 +115,20 @@ export class Renderable {
         }
       }
     });
+    return this;
+  }
+
+  protected _update(params: IRenderable) {
+    const newState = Object.assign(this.state, params);
+    const { name, x, y, z, color } = newState;
+    this.state = newState;
+    this.object.position.set(x, y, z);
+    this.object.name = name;
+    this.object.traverse(child => {
+      // todo 修改子
+
+    })
+    
     return this;
   }
 }

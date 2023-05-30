@@ -1,7 +1,7 @@
-import { Camera, Scene } from "three";
 import { Player, ProfileMap } from "../Player";
-import { PerspectiveType } from "../utils/PerspectiveManager";
+import { PerspectiveType } from "../managers/PerspectiveManager"
 import { IViewOption, View } from "./View"
+import { Cylinder } from "../utils/Box";
 
 export interface IProfileViewOption extends IViewOption {}
 
@@ -9,22 +9,26 @@ const DELTA = 50;
 
 export class ProfileView extends View {
   private profiles: Player[] = [];
+  private leftArrow: Cylinder;
+  private rightArrow: Cylinder;
   private _profileID = 0;
 
   constructor(options: IProfileViewOption) {
     super(options);
-  }
-
-  public override mount() {
     ProfileMap.forEach((v, k) => {
       const profile = new Player({
         name: `model_${v}`,
         profileID: k,
         x: k * DELTA,
       }, this.objectManager);
-      profile.object.transform({ scale: [0.1, 0.1, 0.1] })
+      profile.object.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
       this.profiles.push(profile);
     });
+    this.leftArrow = new Cylinder({ name: 'leftArrow', radiusBottom: 5, height: 5 });
+    this.rightArrow = new Cylinder({ name: 'rightArrow', radiusBottom: 5, height: 5 });
+  }
+
+  public mount() {
     this.scene = this.sceneManager.switch('profile', {
       background: 0x0088ff,
     });
@@ -37,15 +41,16 @@ export class ProfileView extends View {
     this.controlManager
       .update({ showJoyStick: false, controlPointer: false })
       .mount(this.camera, this.onMove.bind(this))
-      .on('keyup', this.onKeyUp.bind(this))
+      .on('keyup', this.onKeyUp.bind(this));
+
     return this;
   }
 
-  public override unmount() {
+  public unmount() {
     this.controlManager.unmount();
   }
 
-  public override render(dt: number) {
+  public render(dt: number) {
     const {
       sceneManager, 
       profiles, 
@@ -53,8 +58,12 @@ export class ProfileView extends View {
     } = this
     
     profiles.forEach(profile => {
-      sceneManager.add(profile.object)
+      sceneManager.add(profile.object);
+      profile.object.transform({ rotateY: dt * 1 })
     });
+
+    sceneManager.add(this.leftArrow);
+    sceneManager.add(this.rightArrow);
     
     sceneManager.render(camera);
   }
@@ -89,5 +98,6 @@ export class ProfileView extends View {
     }
     this.perspectiveManager.move({ x: (val - this.profileID) * DELTA });
     this._profileID = val;
+    
   }
 }

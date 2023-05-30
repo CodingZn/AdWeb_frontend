@@ -1,7 +1,5 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
-import { SceneManager } from '../utils/SceneManager';
 import * as THREE from 'three';
-import { PerspectiveType } from '../utils/PerspectiveManager';
 import { Game } from '../Game';
 
 // for debug

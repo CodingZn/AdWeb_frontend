@@ -1,4 +1,4 @@
-import { ObjectManager } from "./utils/ObjectManager";
+import { ObjectManager } from "./managers/ObjectManager";
 import { Renderable, IRenderable, defaultRenderableParams } from "./utils/Renderable";
 
 export interface IPlayerParams extends IRenderable {

@@ -1,5 +1,5 @@
 import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Scene, WebGLRenderer } from "three";
-import { Renderable } from "./Renderable";
+import { Renderable } from "../utils/Renderable";
 
 export interface ISceneManagerOption {
   container: HTMLElement,

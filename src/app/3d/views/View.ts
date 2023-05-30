@@ -1,8 +1,8 @@
 import { Camera, Scene } from "three";
-import { ControlManager, IDestroyer, IMoveState } from "../utils/ControlManager";
-import { ObjectManager } from "../utils/ObjectManager";
-import { PerspectiveManager } from "../utils/PerspectiveManager";
-import { SceneManager } from "../utils/SceneManager";
+import { ControlManager, IDestroyer, IMoveState } from "../managers/ControlManager";
+import { ObjectManager } from "../managers/ObjectManager";
+import { PerspectiveManager } from "../managers/PerspectiveManager";
+import { SceneManager } from "../managers/SceneManager";
 
 export interface IViewOption {
   sceneManager: SceneManager,
@@ -11,7 +11,7 @@ export interface IViewOption {
   controlManager: ControlManager
 }
 
-export class View {
+export abstract class View {
   protected sceneManager: SceneManager;
   protected objectManager: ObjectManager;
   protected perspectiveManager: PerspectiveManager;
@@ -20,6 +20,7 @@ export class View {
   protected scene: Scene | null = null;
   protected camera: Camera | null = null;
   private eventMap = new Map<string, Set<(...args: any) => any>>();
+
   constructor(options: IViewOption) {
     const { sceneManager, objectManager, perspectiveManager, controlManager } = options
     this.sceneManager = sceneManager;
@@ -28,15 +29,24 @@ export class View {
     this.controlManager = controlManager;
   }
 
-  protected onMove(state: IMoveState) {
-    this.moveState = state;
-  }
+  /**
+   * 挂载，只在渲染前调用一次
+   */
+  public abstract mount(): any;
 
-  public mount() {}
-  public unmount() {}
+  /**
+   * 卸载，在切换到别的页面时调用一次
+   */
+  public abstract unmount(): any;
 
-  public render(dt: number) {}
+  public abstract render(dt: number): any
 
+  /**
+   * 绑定事件
+   * @param eventName 
+   * @param listener 
+   * @returns 
+   */
   public on(eventName: string, listener: (...arg: any) => any): IDestroyer  {
     let subs = this.eventMap.get(eventName);
     if (subs === undefined) {
@@ -50,6 +60,11 @@ export class View {
     }
   }
 
+  /**
+   * 取消绑定事件
+   * @param eventName 
+   * @param listener 
+   */
   public off(eventName: string, listener: (...arg: any) => any) {
     let subs = this.eventMap.get(eventName);
     if (subs !== undefined) {
@@ -57,10 +72,23 @@ export class View {
     }
   }
 
+  /**
+   * 触发绑定的事件
+   * @param eventName 
+   * @param args 
+   */
   protected emit(eventName: string, ...args: any) {
     let subs = this.eventMap.get(eventName);
     if (subs !== undefined) {
       subs.forEach(sub => sub(args));
     }
+  }
+
+  /**
+   * 视角移动时发生
+   * @param state
+   */
+  protected onMove(state: IMoveState) {
+    this.moveState = state;
   }
 }

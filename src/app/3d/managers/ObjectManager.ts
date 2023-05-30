@@ -1,9 +1,9 @@
 import { AssetManager } from "./AssetManager";
-import { IRenderable, Renderable } from "./Renderable";
+import { IRenderable, Renderable } from "../utils/Renderable";
 
 export interface IObjectParams extends IRenderable {
   url?: string | string[],
-  onLoad?: (resources: any[]) => any 
+  onLoad?: (resources: any[]) => any, 
 }
 
 export interface IObjectManagerOption {
