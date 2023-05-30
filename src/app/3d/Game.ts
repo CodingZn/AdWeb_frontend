@@ -17,6 +17,7 @@ const defaultOption: IGameOption = {
 export class Game {
   private option: IGameOption;
   private activeView: View | null = null;
+  private sceneManager: SceneManager;
   
   private clock: Clock = new Clock();
   private moveState: IMoveState = { forward: 0, right: 0, up: 0 };
@@ -30,7 +31,7 @@ export class Game {
     const perspectiveManager = new PerspectiveManager({ container });
     const objectManager = new ObjectManager({ assetsPath: 'assets/' });
     const controlManager = new ControlManager({ container });
-
+    this.sceneManager = sceneManager;
     // todo
     const profileView = new ProfileView({
       sceneManager,
@@ -50,6 +51,10 @@ export class Game {
     this.activeView = profileView;
 
     this.render();
+  }
+
+  public destory() {
+    this.sceneManager.destory();
   }
 
   private render() {

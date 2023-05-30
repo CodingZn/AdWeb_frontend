@@ -13,13 +13,17 @@ window.THREE = THREE;
   templateUrl: './test.component.html',
   styleUrls: ['./test.component.css']
 })
-export class TestComponent implements OnInit {
-  constructor(private ref: ElementRef) {}
-
-  ngOnInit(): void {
+export class TestComponent {
+  private game: Game;
+  constructor(private ref: ElementRef) {
     const container = document.body;
 
     const game = new Game({ container });
     (window as any).game = game; 
+    this.game = game;
+  }
+
+  ngOnDestroy() {
+    this.game.destory()
   }
 }
