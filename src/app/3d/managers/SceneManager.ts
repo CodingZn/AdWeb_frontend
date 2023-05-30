@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Scene, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Scene, Vector2, WebGLRenderer } from "three";
 import { Renderable } from "../utils/Renderable";
 
 export interface ISceneManagerOption {
@@ -38,10 +38,12 @@ export class SceneManager {
     // init renderer
     this.renderer = new WebGLRenderer();
     this.renderer.shadowMap.enabled = true;
+
     const { container } = this.options;
-    const { width, height } = container.getBoundingClientRect();
-    this.renderer.setSize( width, height );
     container.appendChild(this.renderer.domElement);
+    
+    window.addEventListener('resize', this.onResize.bind(this));
+    this.onResize();
 
     // init sun
     // todo 目前 sun 不可配置
@@ -119,5 +121,19 @@ export class SceneManager {
 
   public destory() {
     this.options.container.removeChild(this.renderer.domElement);
+  }
+  /**
+   * 获取场景大小
+   * @returns 
+   */
+  public getSize(): { width: number, height: number } {
+    const result = new Vector2();
+    this.renderer.getSize(result);
+    return { width: result.x, height: result.y };
+  }
+
+  private onResize() {
+    const { width, height } = this.options.container.getBoundingClientRect();
+    this.renderer.setSize(width, height);
   }
 }

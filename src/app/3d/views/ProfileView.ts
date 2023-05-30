@@ -1,7 +1,6 @@
 import { Player, ProfileMap } from "../Player";
 import { PerspectiveType } from "../managers/PerspectiveManager"
 import { IViewOption, View } from "./View"
-import { Cylinder } from "../utils/Box";
 
 export interface IProfileViewOption extends IViewOption {}
 
@@ -9,8 +8,6 @@ const DELTA = 50;
 
 export class ProfileView extends View {
   private profiles: Player[] = [];
-  private leftArrow: Cylinder;
-  private rightArrow: Cylinder;
   private _profileID = 0;
 
   constructor(options: IProfileViewOption) {
@@ -24,8 +21,6 @@ export class ProfileView extends View {
       profile.object.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
       this.profiles.push(profile);
     });
-    this.leftArrow = new Cylinder({ name: 'leftArrow', radiusBottom: 5, height: 5 });
-    this.rightArrow = new Cylinder({ name: 'rightArrow', radiusBottom: 5, height: 5 });
   }
 
   public mount() {
@@ -61,9 +56,6 @@ export class ProfileView extends View {
       sceneManager.add(profile.object);
       profile.object.transform({ rotateY: dt * 1 })
     });
-
-    sceneManager.add(this.leftArrow);
-    sceneManager.add(this.rightArrow);
     
     sceneManager.render(camera);
   }

@@ -3,7 +3,6 @@ import { Camera, PerspectiveCamera } from "three";
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,
   fov?: number,
-  aspect?: number,
   near?: number,
   far?: number,
 }
@@ -51,16 +50,14 @@ export enum PerspectiveType {
 export class PerspectiveManager {
   private options: IPerspectiveManagerOption;
   private activeType: PerspectiveType | null = null;
-  private cameraMap: Map<PerspectiveType, Camera>;
+  private cameraMap: Map<PerspectiveType, PerspectiveCamera>;
   private cameraStateMap: Map<PerspectiveType, IState>;
+  private _aspect: number = 1;
 
   constructor(options: IPerspectiveManagerOption) {
     this.options = Object.assign(defaultOption, options);
-    const { container } = this.options;
-    if (this.options.aspect === undefined) {
-      const { width, height } = (container as HTMLElement).getBoundingClientRect();
-      options.aspect = width / height;
-    }
+    window.addEventListener('resize', this.onResize.bind(this));
+    this.onResize();
     this.cameraMap = new Map();
     this.cameraStateMap = new Map();
   }
@@ -69,7 +66,7 @@ export class PerspectiveManager {
     if (this.activeType === null) {
       return null;
     }
-    return this.cameraMap.get(this.activeType) as Camera;
+    return this.cameraMap.get(this.activeType) as PerspectiveCamera;
   }
 
   /**
@@ -85,7 +82,7 @@ export class PerspectiveManager {
     const oldState = this.cameraStateMap.get(this.activeType) as IState;
     const state = Object.assign(oldState, params) as IState;
     const { x, y, z, targetX, targetY, targetZ } = state;
-    const camera = this.camera as Camera;
+    const camera = this.camera as PerspectiveCamera;
     camera.position.set(x, y, z);
     camera.lookAt(targetX, targetY, targetZ);
   }
@@ -106,7 +103,7 @@ export class PerspectiveManager {
     let camera = this.cameraMap.get(type);
     let state: ICameraParams;
     if (camera === undefined) {
-      const { fov, aspect, near, far } = this.options;
+      const { options: { fov, near, far }, aspect } = this;
       // 创建相机和状态
       camera = new PerspectiveCamera(fov, aspect, near, far);     
       this.cameraMap.set(type, camera);
@@ -126,6 +123,24 @@ export class PerspectiveManager {
    */
   public switch(type: PerspectiveType, params?: ICameraParams) {
     this.activeType = type;
-    return this.get(type, params);
+    const camera = this.get(type, params);
+    this.onResize();
+    return camera;
+  }
+
+  private get aspect() { return this._aspect; }
+
+  private set aspect(v) {
+    this._aspect = v;
+    if (this.camera !== null) {
+      this.camera.aspect = v;
+      this.camera.updateProjectionMatrix();
+    }
+  }
+
+  private onResize() {
+    const container = this.options.container as HTMLHRElement;
+    const { width, height } = container.getBoundingClientRect();
+    this.aspect = width / height;
   }
 }
