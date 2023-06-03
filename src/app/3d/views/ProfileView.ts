@@ -42,7 +42,9 @@ export class ProfileView extends View {
   }
 
   public unmount() {
-    this.controlManager.unmount();
+    this.controlManager
+      .unmount()
+      .update({ showJoyStick: true, controlPointer: true });
   }
 
   public render(dt: number) {

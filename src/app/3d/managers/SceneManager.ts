@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Scene, Vector2, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Object3D, Scene, Vector2, WebGLRenderer } from "three";
 import { Renderable } from "../utils/Renderable";
 
 export interface ISceneManagerOption {
@@ -26,7 +26,8 @@ const defaultParams = {
 export class SceneManager {
   private options: ISceneManagerOption;
   private activeScene: Scene | null;
-  private sceneMap: Map<string, Scene>;
+  private sceneMap: Map<string, Scene> = new Map();
+  private coliderMap: Map<string, Object3D> = new Map();
   private renderer: WebGLRenderer;
   private sun: DirectionalLight;
 
@@ -89,8 +90,10 @@ export class SceneManager {
   public switch(name: string, params?: ISceneParams) {
     let scene = this.get(name, params);
     // 切换
-    this.activeScene = scene;
-    this.activeScene.add(this.sun);
+    if (this.activeScene !== scene) {
+      this.activeScene = scene;
+      this.activeScene.add(this.sun);
+    }
     return scene;
   }
 

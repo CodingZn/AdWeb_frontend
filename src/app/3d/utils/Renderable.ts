@@ -49,8 +49,6 @@ export class Renderable {
     }
   }
 
-  
-
   public update(params: IRenderable) {
     return this._update(params);
   }
@@ -108,10 +106,15 @@ export class Renderable {
     this.object.traverse((child: Object3D) => {
       if ( (child as any).isMesh ) {
         const mesh = child as Mesh;
-        child.castShadow = true;
-        child.receiveShadow = true;
+        const material = mesh.material as MeshBasicMaterial;
+        if (mesh.name.startsWith("proxy")){
+          material.visible = false;
+        } else {
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+        }
         if (texture !== undefined) {
-          (mesh.material as MeshBasicMaterial).map = texture;
+          material.map = texture;
         }
       }
     });

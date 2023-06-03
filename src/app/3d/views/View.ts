@@ -1,30 +1,36 @@
 import { Camera, Scene } from "three";
+import { AssetManager } from "../managers/AssetManager";
 import { ControlManager, IDestroyer, IMoveState } from "../managers/ControlManager";
 import { ObjectManager } from "../managers/ObjectManager";
 import { PerspectiveManager } from "../managers/PerspectiveManager";
 import { SceneManager } from "../managers/SceneManager";
 
-export interface IViewOption {
+export interface IManagers {
   sceneManager: SceneManager,
   objectManager: ObjectManager,
   perspectiveManager: PerspectiveManager,
-  controlManager: ControlManager
+  controlManager: ControlManager,
+  assetManager: AssetManager,
 }
+
+export interface IViewOption extends IManagers {}
 
 export abstract class View {
   protected sceneManager: SceneManager;
   protected objectManager: ObjectManager;
   protected perspectiveManager: PerspectiveManager;
   protected controlManager: ControlManager;
+  protected assetManager: AssetManager;
   protected moveState: IMoveState = { forward: 0, right: 0, up: 0 };
   protected scene: Scene | null = null;
   protected camera: Camera | null = null;
   private eventMap = new Map<string, Set<(...args: any) => any>>();
 
   constructor(options: IViewOption) {
-    const { sceneManager, objectManager, perspectiveManager, controlManager } = options
+    const { sceneManager, objectManager, assetManager, perspectiveManager, controlManager } = options
     this.sceneManager = sceneManager;
     this.objectManager = objectManager;
+    this.assetManager = assetManager;
     this.perspectiveManager = perspectiveManager;
     this.controlManager = controlManager;
   }

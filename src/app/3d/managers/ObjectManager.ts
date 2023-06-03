@@ -7,7 +7,7 @@ export interface IObjectParams extends IRenderable {
 }
 
 export interface IObjectManagerOption {
-  assetsPath: string
+  assetManager: AssetManager;
 }
 
 export class ObjectManager {
@@ -16,7 +16,7 @@ export class ObjectManager {
 
   constructor(options: IObjectManagerOption) {
     this.objectMap = new Map();
-    this.assetManager = new AssetManager(options);
+    this.assetManager = options.assetManager;
   }
 
   /**
@@ -38,20 +38,27 @@ export class ObjectManager {
     // 加载物体模型，加载完成后回调 onLoad
     if (params?.url) {
       const url = params.url as string | string[];
-      this.assetManager
-      .get(url)
-      .then((resource) => {
-        let resources: any[] = [];
-        if (Array.isArray(resource)) {
-          resources.push(...resource);
-        } else {
-          resources.push(resource);
-        }
-        newRenderable.onLoad(resources);
-        if (params.onLoad) {
-          params.onLoad(resources);
-        }
-      })
+      const { assetManager } = this;
+      if (Array.isArray(url)) {
+        const urls = url as string[];
+        const promises: Promise<any>[] = [];
+        urls.forEach(url => {
+          promises.push(assetManager.get(url));
+        })
+        Promise.all(promises).then((resources: any[]) => {
+          newRenderable.onLoad(resources);
+          if (params.onLoad) {
+            params.onLoad(resources);
+          }
+        })
+      } else {
+        assetManager.get(url).then((resource) => {
+          newRenderable.onLoad([resource]);
+          if (params.onLoad) {
+            params.onLoad([resource]);
+          }
+        })
+      }
     }
     objectMap.set(name, newRenderable);
     return newRenderable;
@@ -64,13 +71,13 @@ export class ObjectManager {
    * @returns 
    */
   public getAsync(name: string, params?: IObjectParams) {
-    const { get } = this;
+    const self = this;
     return new Promise((resolve) => {
       const newParams = params || {};
       newParams.onLoad = (object) => {
         resolve(object);
       }
-      get(name, newParams);
+      self.get(name, newParams);
     })
   }
 }

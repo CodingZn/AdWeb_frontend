@@ -71,17 +71,8 @@ export class AssetManager {
    */
   public get(url: string | string[], loader?: Loader): Promise<any> | Promise<any[]> {
     if (Array.isArray(url)) {
-      const promises = [];
       const urls = url as string[];
-      for (const url of urls) {
-        if (Array.isArray(url)) {
-          // 二维 url 数组，嵌套的视为一组
-          promises.push(this.loadAssets(url as string[]));
-        } else {
-          promises.push(this.get(url, loader));
-        }
-      }
-      return Promise.all(promises);
+      return this.loadAssets(urls);
     } else {
       const { assetMap } = this;
       const res = assetMap.get(url);
@@ -117,6 +108,7 @@ export class AssetManager {
   private loadAssets(urls: string[]) {
     // 只有 CubeTextureLoader 加载多个文件
     const loader = cached(CubeTextureLoader) as IBundleLoader;
+    loader.setPath(this.assetsPath);
     return loader.loadAsync(urls);
   }
 }

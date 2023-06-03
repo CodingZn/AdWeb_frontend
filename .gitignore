@@ -10,3 +10,5 @@ node_modules/
 # system
 .DS_Store
 Thumbs.db
+
+dist
