@@ -1,4 +1,5 @@
 import { Clock } from "three";
+import { LocalPlayer } from "./LocalPlayer";
 import { AssetManager } from "./managers/AssetManager";
 import { ControlManager, IMoveState } from "./managers/ControlManager";
 import { ObjectManager } from "./managers/ObjectManager";
@@ -44,25 +45,31 @@ export class Game {
       assetManager,
       controlManager
     }
+
+    // init player
+    // todo
+    const localPlayer = new LocalPlayer({ name: 'steve', profileID: 0 }, assetManager);
     // todo
     const profileView = new ProfileView(this.managers);
-
-    this.viewMap.set('profile', profileView);
-
-    const townView = new TownView(this.managers);
-    
-    this.viewMap.set('town', townView);
-
-    const self = this;
-    this.switch('profile');
     profileView.on('save', (profileID: number) => {
-      console.log('save: ' + profileID)
+      localPlayer.update({ profileID });
       self.switch('town');
-    })
-
+    });
     profileView.on('exit', () => {
       self.switch('town');
     })
+    this.viewMap.set('profile', profileView);
+
+    const townView = new TownView(Object.assign(this.managers, { localPlayer }));
+    townView.on('profile', () => {
+      self.switch('profile');
+    })
+    this.viewMap.set('town', townView);
+
+    const self = this;
+    
+    // this.switch('profile');
+    this.switch('town');
 
     this.render();
   }

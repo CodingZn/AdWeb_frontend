@@ -87,7 +87,6 @@ export class Renderable {
   }
 
   public onLoad(resources: any[]) {
-    console.log('onload', resources);
     const self = this;
     const objects: Object3D[] = [];
     let texture: Texture | undefined;
@@ -107,12 +106,8 @@ export class Renderable {
       if ( (child as any).isMesh ) {
         const mesh = child as Mesh;
         const material = mesh.material as MeshBasicMaterial;
-        if (mesh.name.startsWith("proxy")){
-          material.visible = false;
-        } else {
-          mesh.castShadow = true;
-          mesh.receiveShadow = true;
-        }
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         if (texture !== undefined) {
           material.map = texture;
         }

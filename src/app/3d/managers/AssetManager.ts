@@ -82,7 +82,7 @@ export class AssetManager {
           return res;
         });
       }
-      return Promise.resolve(res);
+      return Promise.resolve(res.clone());
     }
   }
 

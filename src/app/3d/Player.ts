@@ -1,8 +1,8 @@
-import { ObjectManager } from "./managers/ObjectManager";
-import { Renderable, IRenderable, defaultRenderableParams } from "./utils/Renderable";
+import { AssetManager } from "./managers/AssetManager";
+import { Renderable, IRenderable, defaultRenderableParams, ITransformType } from "./utils/Renderable";
 
 export interface IPlayerParams extends IRenderable {
-  name: string,
+  name?: string,
   profileID?: number,
 }
 
@@ -24,12 +24,13 @@ export const ProfileMap = [
 
 export class Player {
   private obj: Renderable;
-  private objectManager: ObjectManager;
+  private assetManager: AssetManager;
   private params: IPlayerParams = defaultPlayerParams;
+  private transformParams: ITransformType = {};
 
-  constructor(params: IPlayerParams, objectManager: ObjectManager) {
-    this.objectManager = objectManager;
-    this.obj = this.update(params);
+  constructor(params: IPlayerParams, assetManager: AssetManager) {
+    this.assetManager = assetManager;
+    this.obj = this.update(params).obj;
   }
 
   public get object() {
@@ -38,18 +39,30 @@ export class Player {
 
   public update(params: IPlayerParams) {
     this.params = Object.assign(this.params, params);
-    const { name, profileID } = this.params;
+    const { profileID } = this.params;
     const profileName = ProfileMap[profileID as number];
-    this.obj = this.objectManager.get(
-      name, 
-      {
-        url: [
-          `fbx/people/${profileName}.fbx`,
-          `images/SimplePeople_${profileName}_Brown.png`
-        ],
-        ...this.params,
-      },
-      true);
-      return this.obj;
+    const obj = new Renderable(this.params);
+    if (this.obj && this.obj.object.parent) {
+      this.obj.object.parent.remove(this.obj.object);
+    }
+    this.obj = obj;
+    const self = this;
+
+    this.assetManager.get(`fbx/people/${profileName}.fbx`)
+    .then((res) => {
+      obj.onLoad([res]);
+      return Promise.resolve(self.assetManager);
+    })
+    .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))
+    .then((res) => {
+      obj.onLoad([res]);
+    });
+    return this.transform(this.transformParams);
+  }
+
+  public transform(params: ITransformType) {
+    this.transformParams = Object.assign(this.transformParams, params);
+    this.object.transform(params);
+    return this;
   }
 }

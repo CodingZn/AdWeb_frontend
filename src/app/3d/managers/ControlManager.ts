@@ -49,6 +49,7 @@ export class ControlManager {
   private camera: Camera | null = null;
   private mounted: Boolean = false;
   private onMove: ((state: IMoveState) => any) | undefined;
+  private onSwitchPerpective: (() => any) | undefined;
   private moveState: IMoveInnerState = { forward: 0, right: 0, back: 0, left: 0, up: 0 };
   public joyStick: JoyStick | null = null;
   private pointerLockControls: PointerLockControls | null = null;
@@ -66,7 +67,7 @@ export class ControlManager {
     return this;
   }
 
-  public mount(camera: Camera | null, onMove?: ((params: IMoveState) => any)) {
+  public mount(camera: Camera | null, onMove?: ((params: IMoveState) => any), onSwitchPerpective?: () => any) {
     if (camera === null) {
       console.warn('No camera to be controled!');
       return this;
@@ -78,8 +79,11 @@ export class ControlManager {
     this.mounted = true;
     this.camera = camera;
     this.onMove = onMove;
+    this.onSwitchPerpective = onSwitchPerpective;
 
     const { container, showJoyStick, controlPointer } = this.options;
+    
+    // 手柄
     if (showJoyStick) {
       this.joyStick = new JoyStick({ 
         container, 
@@ -87,10 +91,12 @@ export class ControlManager {
       });
       this.joyStick.mount();
     }
-    if (this.pointerLockControls !== null) {
-      (this.pointerLockControls as any).destory();
-    }
+    
+    // 视角锁定控制
     if (controlPointer) {
+      if (this.pointerLockControls !== null) {
+        (this.pointerLockControls as any).destory();
+      }
       this.pointerLockControls = new PointerLockControls(this.camera, container);
     }
     this.bindEvents();
@@ -105,7 +111,9 @@ export class ControlManager {
     this.mounted = false;
     if (this.joyStick !== null) {
       this.joyStick.unmount();
+      this.joyStick = null;
     }
+    this.pointerLockControls = null;
     this.destoryers.forEach(destoryer => destoryer.destory());
     this.destoryers.length = 0;
     return this;
@@ -136,11 +144,20 @@ export class ControlManager {
   private onKeyDown(e: Event) {
     const { moveState } = this;
     switch((e as KeyboardEvent).key) {
-      case 'w': moveState.forward = 1; break;
-      case 's': moveState.back = 1; break;
-      case 'a': moveState.left = 1; break;
-      case 'd': moveState.right = 1; break;
-      case ' ': moveState.up = 1; break;
+      case 'w':
+      case 'ArrowUp':
+         moveState.forward = 1; break;
+      case 's': 
+      case 'ArrowDown': 
+        moveState.back = 1; break;
+      case 'a':
+      case 'ArrowLeft':
+        moveState.left = 1; break;
+      case 'd': 
+      case 'ArrowRight': 
+        moveState.right = 1; break;
+      case ' ': 
+        moveState.up = 1; break;
     }
     this._onMove();
   }
@@ -148,11 +165,22 @@ export class ControlManager {
   private onKeyUp(e: Event) {
     const { moveState } = this;
     switch((e as KeyboardEvent).key) {
-      case 'w': moveState.forward = 0; break;
-      case 's': moveState.back = 0; break;
-      case 'a': moveState.left = 0; break;
-      case 'd': moveState.right = 0; break;
-      case ' ': moveState.up = 0; break;
+      case 'w': 
+      case 'ArrowUp':
+        moveState.forward = 0; break;
+      case 's': 
+      case 'ArrowDown': 
+        moveState.back = 0; break;
+      case 'a':
+      case 'ArrowLeft':
+        moveState.left = 0; break;
+      case 'd': 
+      case 'ArrowRight': 
+        moveState.right = 0; break;
+      case ' ': 
+        moveState.up = 0; break;
+      case 'q':
+        this._onSwitchPerpective(); break;
     }
     this._onMove();
   }
@@ -162,11 +190,13 @@ export class ControlManager {
     onMove && onMove({ forward: forward - back, right: right - left, up });
   }
 
+  private _onSwitchPerpective() {
+    const { onSwitchPerpective } = this;
+    onSwitchPerpective && onSwitchPerpective();
+  }
+
   private onMouseDown(e: Event) {
     this.pointerLockControls?.lock();
-    if (this.joyStick !== null) {
-      this.joyStick.unmount();
-    }
   }
 
   private onLock(e: Event) {}

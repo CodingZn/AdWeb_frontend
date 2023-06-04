@@ -1,8 +1,10 @@
+import { AssetManager } from "../managers/AssetManager";
 import { Player, ProfileMap } from "../Player";
-import { PerspectiveType } from "../managers/PerspectiveManager"
-import { IViewOption, View } from "./View"
+import { IViewOption, PerspectiveType, View } from "./View"
 
-export interface IProfileViewOption extends IViewOption {}
+export interface IProfileViewOption extends IViewOption {
+  assetManager: AssetManager
+}
 
 const DELTA = 50;
 
@@ -11,41 +13,37 @@ export class ProfileView extends View {
   private _profileID = 0;
 
   constructor(options: IProfileViewOption) {
-    super(options);
+    super(Object.assign(options, { 
+      perspectives: [{
+        type: PerspectiveType.FIXED,
+        params: {
+          x: 0,
+          y: 10,
+          z: 50,
+          targetY: 15
+        }
+      }],
+      localPlayer: null
+    }));
     ProfileMap.forEach((v, k) => {
       const profile = new Player({
         name: `model_${v}`,
         profileID: k,
         x: k * DELTA,
-      }, this.objectManager);
+      }, this.assetManager);
       profile.object.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
       this.profiles.push(profile);
     });
   }
 
-  public mount() {
+  public mounted() {
     this.scene = this.sceneManager.switch('profile', {
       background: 0x0088ff,
     });
-    this.camera = this.perspectiveManager.switch(PerspectiveType.FIXED, {
-      x: 0,
-      y: 10,
-      z: 50,
-      targetY: 15
-    });
-    this.controlManager
-      .update({ showJoyStick: false, controlPointer: false })
-      .mount(this.camera, this.onMove.bind(this))
-      .on('keyup', this.onKeyUp.bind(this));
-
-    return this;
+    this.controlManager.on('keyup', this.onKeyUp.bind(this));
   }
 
-  public unmount() {
-    this.controlManager
-      .unmount()
-      .update({ showJoyStick: true, controlPointer: true });
-  }
+  public beforeDestoryed() {}
 
   public render(dt: number) {
     const {

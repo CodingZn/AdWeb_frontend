@@ -1,4 +1,4 @@
-import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Object3D, Scene, Vector2, WebGLRenderer } from "three";
+import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Object3D, Raycaster, Scene, Vector2, Vector3, WebGLRenderer } from "three";
 import { Renderable } from "../utils/Renderable";
 
 export interface ISceneManagerOption {
@@ -25,15 +25,13 @@ const defaultParams = {
 
 export class SceneManager {
   private options: ISceneManagerOption;
-  private activeScene: Scene | null;
+  private activeName: string | null = null;
   private sceneMap: Map<string, Scene> = new Map();
-  private coliderMap: Map<string, Object3D> = new Map();
+  private colliderMap: Map<string, Set<Object3D>> = new Map();
   private renderer: WebGLRenderer;
   private sun: DirectionalLight;
 
   constructor(options: ISceneManagerOption) {
-    this.activeScene = null;
-    this.sceneMap = new Map();
     this.options = Object.assign(defaultOption, options);
 
     // init renderer
@@ -73,13 +71,15 @@ export class SceneManager {
     if (scene === undefined) {
       scene = new Scene();
       this.sceneMap.set(name, scene);
+      this.colliderMap.set(name, new Set());
+      // 配置场景参数
+      // todo 更多参数
+      const { background, ambient, axes } = Object.assign(defaultParams, params);
+      background && (scene.background = new Color(background));
+      ambient && (scene.add(new AmbientLight(ambient)));
+      axes && (scene.add(new AxesHelper(10000)));
+      scene.add(this.sun);
     }
-    // 配置场景参数
-    // todo 更多参数
-    const { background, ambient, axes } = Object.assign(defaultParams, params);
-    background && (scene.background = new Color(background));
-    ambient && (scene.add(new AmbientLight(ambient)));
-    axes && (scene.add(new AxesHelper(10000)));
     return scene;
   }
 
@@ -90,9 +90,8 @@ export class SceneManager {
   public switch(name: string, params?: ISceneParams) {
     let scene = this.get(name, params);
     // 切换
-    if (this.activeScene !== scene) {
-      this.activeScene = scene;
-      this.activeScene.add(this.sun);
+    if (this.activeName !== name) {
+      this.activeName = name;
     }
     return scene;
   }
@@ -100,14 +99,63 @@ export class SceneManager {
   /**
    * 将加入场景
    * @param renderable 
+   * @param isCollider 判断 renderable 的所有孩子是否为障碍物
    * @returns 
    */
-  public add(renderable: Renderable) {
-    const { activeScene } = this;
+  public add(renderable: Renderable, isCollider?: (object: Object3D) => Boolean) {
+    const { activeName, activeScene } = this;
     if (activeScene === null) {
       console.warn('No scene to add object to!');
-    } else if (renderable.object.parent !== activeScene) {
+    } else {
       activeScene.add(renderable.object);
+      if (isCollider) {
+        const colliderSet = this.colliderMap.get(activeName as string) as Set<Object3D>;
+        renderable.object.traverse(child => {
+          if (isCollider(child)) {
+            colliderSet.add(child);
+          }
+        })
+      }
+   }
+  }
+
+  /**
+   * 
+   * @param renderable 
+   * @param dir 世界坐标系下的方向，默认为面朝方向
+   * @param distance 相隔最小距离，默认为 10
+   * @returns 
+   */
+  public collide(renderable: Renderable | Object3D, dir?: { x?: number, y?: number, z?: number }, distance?: number) {
+    if (this.activeName === null) {
+      console.warn('No scene active to check colliders!');
+      return null;
+    }
+    
+    let object = renderable as Object3D;
+    if (renderable instanceof Renderable) {
+      object = renderable.object;
+    }
+    const pos = new Vector3();
+    object.getWorldPosition(pos);
+    const dirVec = new Vector3();
+    if (dir !== undefined) {
+      dirVec.set(dir.x || 0, dir.y || 0, dir.z || 0);
+    } else {
+      object.getWorldDirection(dirVec);
+    }
+    dirVec.normalize();
+    const raycaster = new Raycaster(pos, dirVec);
+    const colliderSet = this.colliderMap.get(this.activeName) as Set<Object3D>;
+    const intersect = raycaster.intersectObjects(Array.from(colliderSet));
+		console.log(dirVec)
+    if (intersect.length > 0) {
+      console.log(dirVec, intersect[0].distance);
+    }
+    if (intersect.length > 0 && intersect[0].distance < (distance || 10)) {
+			return intersect[0];
+		} else {
+      return null;
     }
   }
 
@@ -133,6 +181,15 @@ export class SceneManager {
     const result = new Vector2();
     this.renderer.getSize(result);
     return { width: result.x, height: result.y };
+  }
+
+  private get activeScene() {
+    const { activeName, sceneMap } = this;
+    if (activeName === null) {
+      return null;
+    } else {
+      return sceneMap.get(activeName) as Scene;
+    }
   }
 
   private onResize() {
