@@ -22,8 +22,13 @@ export const PerspectiveType = {
 }
 
 export interface IViewOption extends IManagers {
+  name: string,
   localPlayer?: LocalPlayer,
   perspectives?: (string | symbol | { type: string | symbol, params: ICameraParams })[];
+}
+
+export interface IViewProps {
+  [key: string]: any
 }
 
 const defaultViewOption = {
@@ -31,6 +36,7 @@ const defaultViewOption = {
 }
 
 export abstract class View {
+  protected _name: string; 
   protected sceneManager: SceneManager;
   protected objectManager: ObjectManager;
   protected perspectiveManager: PerspectiveManager;
@@ -41,10 +47,11 @@ export abstract class View {
   protected camera: Camera | null = null;
   protected localPlayer: LocalPlayer | null;
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
-  private eventMap = new Map<string, Set<(...args: any) => any>>();
+  private eventMap = new Map<string | symbol | number, Set<(...args: any) => any>>();
 
   constructor(options: IViewOption) {
     const { 
+      name,
       sceneManager,
       objectManager, 
       assetManager, 
@@ -60,12 +67,17 @@ export abstract class View {
     this.controlManager = controlManager;
     this.localPlayer = localPlayer || null;
     this.perspectives = perspectives;
+    this._name = name;
   }
+
+  public get name() { return this._name; }
+
+  protected set name(v) { this._name = v; }
 
   /**
    * 挂载，只在渲染前调用一次
    */
-  public mount() {
+  public mount(props?: IViewProps) {
     this.onSwitchPerspective();
     if (this.localPlayer === null) {
       this.controlManager.update({ showJoyStick: false, controlPointer: false })
@@ -77,14 +89,16 @@ export abstract class View {
       this.onMove.bind(this), 
       this.onSwitchPerspective.bind(this)
     )
-    this.mounted();
+    this.scene = this.sceneManager.switch(this.name);
+    this.scene.add(this.camera as Camera);
+    this.mounted(props);
     return this;
   }
 
   /**
    * 挂载后钩子，只在挂载后渲染前调用一次
    */
-  protected abstract mounted(): any;
+  protected abstract mounted(props?: IViewProps): any;
 
   /**
    * 销毁前钩子，只在卸载前调用一次
@@ -108,7 +122,7 @@ export abstract class View {
    * @param listener 
    * @returns 
    */
-  public on(eventName: string, listener: (...arg: any) => any): IDestroyer  {
+  public on(eventName: string | symbol | number, listener: (...arg: any) => any): IDestroyer  {
     let subs = this.eventMap.get(eventName);
     if (subs === undefined) {
       subs = new Set();
@@ -126,7 +140,7 @@ export abstract class View {
    * @param eventName 
    * @param listener 
    */
-  public off(eventName: string, listener: (...arg: any) => any) {
+  public off(eventName: string | symbol | number, listener: (...arg: any) => any) {
     let subs = this.eventMap.get(eventName);
     if (subs !== undefined) {
       subs.delete(v => v === listener);
@@ -138,10 +152,10 @@ export abstract class View {
    * @param eventName 
    * @param args 
    */
-  protected emit(eventName: string, ...args: any) {
+  protected emit(eventName: string | symbol | number, ...args: any) {
     let subs = this.eventMap.get(eventName);
     if (subs !== undefined) {
-      subs.forEach(sub => sub(args));
+      subs.forEach(sub => sub(...args));
     }
   }
 
@@ -159,7 +173,7 @@ export abstract class View {
   protected onSwitchPerspective() {
     const { perspectiveManager, perspectives } = this;
     if (perspectives.length === 0) return;
-    const  { active } = perspectiveManager;
+    const { active } = perspectiveManager;
     let index = -1;
     if (active !== null) {
       index = perspectives.indexOf(active);
@@ -171,19 +185,19 @@ export abstract class View {
     } else {
       this.camera = perspectiveManager.switch(perpective as string | symbol);
     }
-    switch (this.perspectiveManager.active) {
-      case PerspectiveType.FIXED:
-        if (this.scene !== null) {
-          this.perspectiveManager.follow(this.scene);
-        }
-        break;
-      case PerspectiveType.BACK: 
+    // switch (this.perspectiveManager.active) {
+    //   case PerspectiveType.FIXED:
+    //     if (this.scene !== null) {
+    //       this.perspectiveManager.follow(this.scene);
+    //     }
+    //     break;
+    //   case PerspectiveType.BACK: 
 
-        break;
-    }
-    if (this.localPlayer !== null) {
-      this.perspectiveManager.follow(this.localPlayer.object);
-    }
+    //     break;
+    // }
+    // if (this.localPlayer !== null) {
+    //   this.perspectiveManager.follow(this.localPlayer.object);
+    // }
   }
 
   /**

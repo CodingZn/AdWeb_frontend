@@ -42,8 +42,6 @@ const defaultParams: IState = {
   targetZ: 0,
 }
 
-
-
 export class PerspectiveManager {
   private options: IPerspectiveManagerOption;
   private activeName: string | symbol | null = null;
@@ -110,7 +108,7 @@ export class PerspectiveManager {
     if (camera) {
       let object;
       const { parent } = camera;
-      if (parent instanceof Scene) {
+      if (parent === null || parent instanceof Scene) {
         object = camera;
       } else {
         object = parent;

@@ -37,6 +37,10 @@ export class Player {
     return this.obj;
   }
 
+  public get name() { return this.params.name; }
+  
+  public get profileID() { return this.params.profileID; }
+
   public update(params: IPlayerParams) {
     this.params = Object.assign(this.params, params);
     const { profileID } = this.params;

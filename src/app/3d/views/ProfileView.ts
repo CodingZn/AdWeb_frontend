@@ -1,12 +1,20 @@
 import { AssetManager } from "../managers/AssetManager";
 import { Player, ProfileMap } from "../Player";
-import { IViewOption, PerspectiveType, View } from "./View"
+import { IViewOption, IViewProps, PerspectiveType, View } from "./View"
 
 export interface IProfileViewOption extends IViewOption {
   assetManager: AssetManager
 }
 
 const DELTA = 50;
+
+export interface IProfileViewProps extends IViewProps {
+  profileID: number
+}
+
+export enum ProfileViewEvent {
+  save, exit
+}
 
 export class ProfileView extends View {
   private profiles: Player[] = [];
@@ -36,14 +44,18 @@ export class ProfileView extends View {
     });
   }
 
-  public mounted() {
-    this.scene = this.sceneManager.switch('profile', {
-      background: 0x0088ff,
-    });
+  public mounted(props?: IProfileViewProps) {
+    this.sceneManager.update({ background: 0x0088ff, sun: null });
     this.controlManager.on('keyup', this.onKeyUp.bind(this));
+    if (props !== undefined) {
+      this.profileID = props.profileID;
+    }
   }
 
-  public beforeDestoryed() {}
+  public beforeDestoryed() {
+    // 相机归为
+    this.profileID = 0;
+  }
 
   public render(dt: number) {
     const {
@@ -71,9 +83,9 @@ export class ProfileView extends View {
         this.profileID ++; break;
       case 'Enter': 
       case ' ':
-        this.emit('save', this.profileID); break;
+        this.emit(ProfileViewEvent.save, this.profileID); break;
       case 'Escape': 
-        this.emit('exit'); break;
+        this.emit(ProfileViewEvent.exit); break;
     }
   }
 

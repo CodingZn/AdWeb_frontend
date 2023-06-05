@@ -8,7 +8,8 @@ export interface ISceneManagerOption {
 
 export interface ISceneParams {
   background?: number,
-  ambient?: number,
+  ambient?: number | null,
+  sun?: number | null,
   axes?: boolean,
 }
 
@@ -23,14 +24,40 @@ const defaultParams = {
   axes: false
 }
 
+interface ISceneState {
+  ambient: AmbientLight | null,
+  sun: DirectionalLight | null,
+  colliders: Set<Object3D>
+}
+
+// todo 目前 sun 不可配置
+const sunFactory = (light: number | null) => {
+  if (light === null) return null;
+  const sun = new DirectionalLight( light );
+  sun.position.set( 30, 100, 40 );
+  sun.target.position.set( 0, 0, 0 )
+  sun.castShadow = true;
+  const lightSize = 500;
+  sun.shadow.camera.near = 1;
+  sun.shadow.camera.far = 500;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -lightSize;
+  sun.shadow.camera.right = sun.shadow.camera.top = lightSize;
+  
+  sun.shadow.bias = 0.0039;
+  sun.shadow.mapSize.width = 1024;
+  sun.shadow.mapSize.height = 1024;
+  return sun;
+}
+
+
 export class SceneManager {
   private options: ISceneManagerOption;
   private activeName: string | null = null;
   private sceneMap: Map<string, Scene> = new Map();
-  private colliderMap: Map<string, Set<Object3D>> = new Map();
+  private stateMap: Map<string, ISceneState> = new Map();
+  private paramsMap: Map<string, ISceneParams> = new Map();
   private renderer: WebGLRenderer;
-  private sun: DirectionalLight;
-
+  
   constructor(options: ISceneManagerOption) {
     this.options = Object.assign(defaultOption, options);
 
@@ -43,23 +70,6 @@ export class SceneManager {
     
     window.addEventListener('resize', this.onResize.bind(this));
     this.onResize();
-
-    // init sun
-    // todo 目前 sun 不可配置
-    const sun = new DirectionalLight( 0xaaaaaa );
-    sun.position.set( 30, 100, 40 );
-    sun.target.position.set( 0, 0, 0 )
-    sun.castShadow = true;
-    const lightSize = 500;
-    sun.shadow.camera.near = 1;
-    sun.shadow.camera.far = 500;
-		sun.shadow.camera.left = sun.shadow.camera.bottom = -lightSize;
-		sun.shadow.camera.right = sun.shadow.camera.top = lightSize;
-
-  	sun.shadow.bias = 0.0039;
-  	sun.shadow.mapSize.width = 1024;
-  	sun.shadow.mapSize.height = 1024;
-    this.sun = sun;
   }
 
   /**
@@ -71,16 +81,19 @@ export class SceneManager {
     if (scene === undefined) {
       scene = new Scene();
       this.sceneMap.set(name, scene);
-      this.colliderMap.set(name, new Set());
       // 配置场景参数
-      // todo 更多参数
-      const { background, ambient, axes } = Object.assign(defaultParams, params);
-      background && (scene.background = new Color(background));
-      ambient && (scene.add(new AmbientLight(ambient)));
-      axes && (scene.add(new AxesHelper(10000)));
-      scene.add(this.sun);
+      this._update(name, params || {}, defaultParams)
     }
     return scene;
+  }
+
+  public update(params: ISceneParams) {
+    if (this.activeName === null) {
+      console.warn('No active scene to update!');
+    } else {
+      this._update(this.activeName, params, this.paramsMap.get(this.activeName));
+    }
+    return this;
   }
 
   /**
@@ -109,7 +122,7 @@ export class SceneManager {
     } else {
       activeScene.add(renderable.object);
       if (isCollider) {
-        const colliderSet = this.colliderMap.get(activeName as string) as Set<Object3D>;
+        const colliderSet = this.stateMap.get(activeName as string)?.colliders as Set<Object3D>;
         renderable.object.traverse(child => {
           if (isCollider(child)) {
             colliderSet.add(child);
@@ -146,7 +159,7 @@ export class SceneManager {
     }
     dirVec.normalize();
     const raycaster = new Raycaster(pos, dirVec);
-    const colliderSet = this.colliderMap.get(this.activeName) as Set<Object3D>;
+    const colliderSet = this.stateMap.get(this.activeName)?.colliders as Set<Object3D>;
     const intersect = raycaster.intersectObjects(Array.from(colliderSet));
 		console.log(dirVec)
     if (intersect.length > 0) {
@@ -181,6 +194,45 @@ export class SceneManager {
     const result = new Vector2();
     this.renderer.getSize(result);
     return { width: result.x, height: result.y };
+  }
+
+  private _update(name: string, params: ISceneParams, oldParams?: ISceneParams) {
+    const scene = this.sceneMap.get(name) as Scene;
+    let state = this.stateMap.get(name);
+    // 先将旧的移除场景
+    if (state !== undefined) {
+      if (state.ambient !== null) {
+        scene.remove(state.ambient);
+      }
+      if (state.sun !== null) {
+        scene.remove(state.sun);
+      }
+    } else {
+      state = {
+        sun: null,
+        ambient: null,
+        colliders: new Set()
+      };
+    }
+    const newParams = Object.assign(oldParams || {}, params);
+    const { background, ambient, sun } = newParams;
+    scene.background = new Color(background);
+    if (ambient !== undefined) {
+      if (ambient === null) {
+        state.ambient = null;
+      } else {
+        state.ambient = new AmbientLight(ambient);
+        scene.add(state.ambient);
+      }
+    }
+    if (sun !== undefined) {
+      state.sun = sunFactory(sun);
+      if (state.sun !== null) {
+        scene.add(state.sun);
+      }
+    }
+    this.stateMap.set(name, state);
+    this.paramsMap.set(name, newParams);
   }
 
   private get activeScene() {

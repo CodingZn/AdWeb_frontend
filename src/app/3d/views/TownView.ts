@@ -4,6 +4,10 @@ import { IViewOption, PerspectiveType, View } from "./View"
 
 export interface ITownViewOption extends IViewOption {}
 
+export enum TownViewEvent {
+  profile
+}
+
 export class TownView extends View {
   private town: Renderable;
   private background: CubeTexture | null = null;
@@ -32,7 +36,6 @@ export class TownView extends View {
   }
 
   public mounted() {
-    this.scene = this.sceneManager.switch('town', { axes: true });
     this.controlManager.on('keyup', this.onKeyup.bind(this));
   }
 
@@ -64,7 +67,7 @@ export class TownView extends View {
   private onKeyup(e: Event) {
     switch((e as KeyboardEvent).key) {
       case 'p': 
-        this.emit('profile'); break;
+        this.emit(TownViewEvent.profile, this.localPlayer?.profileID); break;
     }
   }
 }

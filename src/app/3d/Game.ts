@@ -5,9 +5,9 @@ import { ControlManager, IMoveState } from "./managers/ControlManager";
 import { ObjectManager } from "./managers/ObjectManager";
 import { PerspectiveManager } from "./managers/PerspectiveManager";
 import { SceneManager } from "./managers/SceneManager"
-import { ProfileView } from "./views/ProfileView";
-import { TownView } from "./views/TownView";
-import { IManagers, View } from "./views/View";
+import { ProfileView, ProfileViewEvent } from "./views/ProfileView";
+import { TownView, TownViewEvent } from "./views/TownView";
+import { IManagers, IViewProps, View } from "./views/View";
 
 interface IGameOption {
   container?: HTMLElement
@@ -47,29 +47,40 @@ export class Game {
     }
 
     // init player
-    // todo
-    const localPlayer = new LocalPlayer({ name: 'steve', profileID: 0 }, assetManager);
-    // todo
-    const profileView = new ProfileView(this.managers);
-    profileView.on('save', (profileID: number) => {
-      localPlayer.update({ profileID });
-      self.switch('town');
-    });
-    profileView.on('exit', () => {
-      self.switch('town');
-    })
-    this.viewMap.set('profile', profileView);
+    const localPlayer = new LocalPlayer(
+      { 
+        name: 'steve', 
+        profileID: 0 
+      }, 
+      assetManager);
 
-    const townView = new TownView(Object.assign(this.managers, { localPlayer }));
-    townView.on('profile', () => {
-      self.switch('profile');
+    // init views
+    const profileView = new ProfileView({ 
+      name: 'profile',
+      ...this.managers
+    });
+    profileView.on(ProfileViewEvent.save, (profileID: number) => {
+      localPlayer.update({ profileID });
+      self.switch(townView.name);
+    });
+    profileView.on(ProfileViewEvent.exit, () => {
+      self.switch(townView.name);
     })
-    this.viewMap.set('town', townView);
+    this.viewMap.set(profileView.name, profileView);
+
+    const townView = new TownView({ 
+      name: 'town', 
+      localPlayer,
+      ...this.managers 
+    });
+    townView.on(TownViewEvent.profile, (profileID: number) => {
+      self.switch(profileView.name, { profileID });
+    })
+    this.viewMap.set(townView.name, townView);
 
     const self = this;
     
-    // this.switch('profile');
-    this.switch('town');
+    this.switch(townView.name);
 
     this.render();
   }
@@ -78,14 +89,14 @@ export class Game {
     this.managers.sceneManager.destory();
   }
 
-  public switch(name: string) {
+  public switch(name: string, props?: IViewProps) {
     if (this.activeView !== null) {
       this.activeView.unmount();
       this.activeView = null;
     }
     const view = this.viewMap.get(name);
     if (view !== undefined) {
-      this.activeView = view.mount();
+      this.activeView = view.mount(props);
     } else {
       console.warn('No such view: ', name);
     }
