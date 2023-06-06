@@ -53,7 +53,7 @@ export class ProfileView extends View {
   }
 
   public beforeDestoryed() {
-    // 相机归为
+    // 相机归位
     this.profileID = 0;
   }
 

@@ -26,21 +26,21 @@ interface IState extends ICameraParams {
   targetZ: number,
 }
 
-const defaultOption: IPerspectiveManagerOption = {
+const defaultOption: () => IPerspectiveManagerOption = () => ({
   container: document.body,
   fov: 45,
   near: 0.1,
   far: 200000
-}
+})
 
-const defaultParams: IState = {
+const defaultParams: () => IState = () => ({
   x: 0, 
   y: 0,
   z: 10,
   targetX: 0,
   targetY: 0,
   targetZ: 0,
-}
+})
 
 export class PerspectiveManager {
   private options: IPerspectiveManagerOption;
@@ -50,7 +50,7 @@ export class PerspectiveManager {
   private _aspect: number = 1;
 
   constructor(options: IPerspectiveManagerOption) {
-    this.options = Object.assign(defaultOption, options);
+    this.options = Object.assign(defaultOption(), options);
     window.addEventListener('resize', this.onResize.bind(this));
     this.onResize();
     this.cameraMap = new Map();
@@ -69,6 +69,28 @@ export class PerspectiveManager {
   }
 
   /**
+   * 
+   * @param type 获取相机，若是第一次获取则创建一个
+   * @param params 
+   */
+  public get(name: string | symbol, params?: ICameraParams) {
+    let camera = this.cameraMap.get(name);
+    let state: ICameraParams;
+    if (camera === undefined) {
+      const { options: { fov, near, far }, aspect } = this;
+      // 创建相机和状态
+      camera = new PerspectiveCamera(fov, aspect, near, far);     
+      this.cameraMap.set(name, camera);
+      state = Object.assign(defaultParams(), params);
+      this.cameraStateMap.set(name, state as IState);
+    } else {
+      state = params || {};
+    }
+    this._update(name, state);
+    return camera;
+  }
+
+  /**
    * 更新当前相机
    * @param params 
    * @returns 
@@ -78,24 +100,25 @@ export class PerspectiveManager {
       console.warn('No active camera to update!');
       return;
     }
-    const oldState = this.cameraStateMap.get(this.activeName) as IState;
-    const state = Object.assign(oldState, params) as IState;
-    const { x, y, z, targetX, targetY, targetZ } = state;
-    const camera = this.camera as PerspectiveCamera;
-    camera.position.set(x, y, z);
-    camera.lookAt(targetX, targetY, targetZ);
+    this._update(this.activeName, params);
   }
 
-  public follow(renderable: Renderable | Object3D) {
+  /**
+   * 跟踪某个物体
+   * @param renderable 
+   * @returns 
+   */
+  public follow(renderable: Renderable | Object3D, lookAt: boolean = true) {
     if (this.activeName === null) {
       console.warn('No active camera to follow!');
       return;
     }
-    let object = renderable;
+    let object = renderable as Object3D;
     if (renderable instanceof Renderable) {
       object = renderable.object;
     }
     object.add(this.camera as PerspectiveCamera);
+    lookAt && (this.camera?.lookAt(object.position));
   }
 
   /**
@@ -121,28 +144,6 @@ export class PerspectiveManager {
 
   /**
    * 
-   * @param type 切换相机
-   * @param params 
-   */
-  public get(name: string | symbol, params?: ICameraParams) {
-    let camera = this.cameraMap.get(name);
-    let state: ICameraParams;
-    if (camera === undefined) {
-      const { options: { fov, near, far }, aspect } = this;
-      // 创建相机和状态
-      camera = new PerspectiveCamera(fov, aspect, near, far);     
-      this.cameraMap.set(name, camera);
-      state = Object.assign(defaultParams, params); 
-      this.cameraStateMap.set(name, state as IState);
-    } else {
-      state = params || {};
-    }
-    this.update(state);
-    return camera;
-  }
-
-  /**
-   * 
    * @param name 切换相机
    * @param params 
    */
@@ -164,6 +165,16 @@ export class PerspectiveManager {
       this.camera.aspect = v;
       this.camera.updateProjectionMatrix();
     }
+  }
+
+  private _update(name: string | symbol, params: ICameraParams) {
+    const oldState = this.cameraStateMap.get(name) as IState;
+    const camera = this.cameraMap.get(name) as PerspectiveCamera;
+    const state = Object.assign(oldState, params) as IState;
+    this.cameraStateMap.set(name, state);
+    const { x, y, z, targetX, targetY, targetZ } = state;
+    camera.position.set(x, y, z);
+    camera.lookAt(targetX, targetY, targetZ);
   }
 
   private onResize() {

@@ -8,14 +8,14 @@ export interface ICylinder extends IRenderable {
   color?: string
 }
 
-const defaultCylinderParams = {
+const defaultCylinderParams = () => ({
   radiusTop: 0,
   color: '#ffffff'
-}
+})
 
 export class Cylinder extends Renderable {
   constructor(params? :ICylinder) {
-    const newParams = Object.assign(defaultCylinderParams, params);
+    const newParams = Object.assign(defaultCylinderParams(), params);
     super(newParams);
     const { color, radiusTop, radiusBottom, height } = newParams;
     const geometry = new CylinderGeometry( radiusTop, radiusBottom, height, 64 );

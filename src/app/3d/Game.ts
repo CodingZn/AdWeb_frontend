@@ -15,9 +15,9 @@ interface IGameOption {
 
 
 
-const defaultOption: IGameOption = {
+const defaultOption: () => IGameOption = () => ({
   container: document.body
-}
+})
 
 export class Game {
   private option: IGameOption;
@@ -28,7 +28,7 @@ export class Game {
   private clock: Clock = new Clock();
   
   constructor(option: IGameOption) {
-    this.option = Object.assign(defaultOption, option);
+    this.option = Object.assign(defaultOption(), option);
     const container = this.option.container as HTMLElement;
 
     // init managers

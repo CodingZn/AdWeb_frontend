@@ -31,9 +31,9 @@ export interface IViewProps {
   [key: string]: any
 }
 
-const defaultViewOption = {
+const defaultViewOption = () => ({
   perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
-}
+})
 
 export abstract class View {
   protected _name: string; 
@@ -59,7 +59,7 @@ export abstract class View {
       controlManager,
       localPlayer,
       perspectives
-    } = Object.assign(defaultViewOption, options);
+    } = Object.assign(defaultViewOption(), options);
     this.sceneManager = sceneManager;
     this.objectManager = objectManager;
     this.assetManager = assetManager;
@@ -68,6 +68,9 @@ export abstract class View {
     this.localPlayer = localPlayer || null;
     this.perspectives = perspectives;
     this._name = name;
+    // 初始化机位
+    this.perspectiveManager.get(PerspectiveType.BACK, { x: 0, y: 500, z: 500 })
+    this.perspectiveManager.get(PerspectiveType.FIRST, { x: 0, y: 20, z: 0 })
   }
 
   public get name() { return this._name; }
@@ -185,19 +188,6 @@ export abstract class View {
     } else {
       this.camera = perspectiveManager.switch(perpective as string | symbol);
     }
-    // switch (this.perspectiveManager.active) {
-    //   case PerspectiveType.FIXED:
-    //     if (this.scene !== null) {
-    //       this.perspectiveManager.follow(this.scene);
-    //     }
-    //     break;
-    //   case PerspectiveType.BACK: 
-
-    //     break;
-    // }
-    // if (this.localPlayer !== null) {
-    //   this.perspectiveManager.follow(this.localPlayer.object);
-    // }
   }
 
   /**
@@ -207,6 +197,16 @@ export abstract class View {
    */
   protected move(dt: number) {
     if (this.localPlayer === null) return;
+    const { active } = this.perspectiveManager
+    if (active === PerspectiveType.FIRST) {
+      // 第一人称隐去角色
+      this.localPlayer.object.update({ visible: false })
+    } else {
+      this.localPlayer.object.update({ visible: true })
+    }
+    const lookAt = active !== PerspectiveType.FIRST;
+    this.perspectiveManager.follow(this.localPlayer.object, lookAt);
+
     const { forward, right, up } = this.moveState;
     const speed = 10;
     const object = this.localPlayer.object.object;

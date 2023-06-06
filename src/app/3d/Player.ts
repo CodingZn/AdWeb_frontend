@@ -6,10 +6,10 @@ export interface IPlayerParams extends IRenderable {
   profileID?: number,
 }
 
-const defaultPlayerParams = {
+const defaultPlayerParams = () => ({
   profileID: 0,
-  ...defaultRenderableParams
-}
+  ...defaultRenderableParams()
+})
 
 export const ProfileMap = [
   'Doctor',
@@ -25,7 +25,7 @@ export const ProfileMap = [
 export class Player {
   private obj: Renderable;
   private assetManager: AssetManager;
-  private params: IPlayerParams = defaultPlayerParams;
+  private params: IPlayerParams = defaultPlayerParams();
   private transformParams: ITransformType = {};
 
   constructor(params: IPlayerParams, assetManager: AssetManager) {

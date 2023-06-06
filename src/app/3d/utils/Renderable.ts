@@ -8,6 +8,7 @@ export interface Position {
 export interface IRenderable extends Position {
   name?: string,
   color?: string,
+  visible?: boolean
 }
 
 export interface ITransformType {
@@ -25,32 +26,40 @@ export interface ITransformType {
 export interface IRenderableDefault extends IRenderable, Position {
   name: string,
   color: string,
+  visible: boolean,
   x: number, 
   y: number, 
-  z: number 
+  z: number
 }
 
-export const defaultRenderableParams: IRenderableDefault = {
+export const defaultRenderableParams: () => IRenderableDefault = () => ({
   name: '',
   x: 0,
   y: 0,
   z: 0,
   color: '#ffffff',
-}
+  visible: true,
+})
 
 export class Renderable {
   public object: Object3D;
-  protected state: IRenderableDefault = defaultRenderableParams;
+  private name: string = '';
 
   constructor(params?: IRenderable) {
     this.object = new Group();
     if (params !== undefined) {
-      this.update(params);
+      this._update(defaultRenderableParams(), params);
     }
   }
 
+  public get state(): IRenderable {
+    const { position: { x, y, z }, visible } = this.object;
+    const { name } = this;
+    return { name, x, y, z, visible };
+  }
+
   public update(params: IRenderable) {
-    return this._update(params);
+    return this._update(this.state, params);
   }
 
   public transform(transform: ITransformType) {
@@ -74,6 +83,7 @@ export class Renderable {
       scale[d as keyof Position] = v * vold;
     }
     this.object.scale.copy(scale);
+    const { x, y, z } = this.object.position;
     return this;
   }
 
@@ -116,12 +126,12 @@ export class Renderable {
     return this;
   }
 
-  protected _update(params: IRenderable) {
-    const newState = Object.assign(this.state, params);
-    const { name, x, y, z, color } = newState;
-    this.state = newState;
+  protected _update(oldState: IRenderable, state: IRenderable) {
+    const newState = Object.assign(oldState, state) as IRenderableDefault;
+    const { name, x, y, z, color, visible } = newState;
     this.object.position.set(x, y, z);
     this.object.name = name;
+    this.object.visible = visible;
     this.object.traverse(child => {
       // todo 修改子
 

@@ -13,16 +13,16 @@ export interface ISceneParams {
   axes?: boolean,
 }
 
-const defaultOption: ISceneManagerOption = {
+const defaultOption: () => ISceneManagerOption = () => ({
   container: document.body,
-}
+})
 
-const defaultParams = {
+const defaultParams = () => ({
   background: 0xa0a0a0,
   ambient: 0xaaaaaa,
   light: 0xaaaaaa,
   axes: false
-}
+})
 
 interface ISceneState {
   ambient: AmbientLight | null,
@@ -59,7 +59,7 @@ export class SceneManager {
   private renderer: WebGLRenderer;
   
   constructor(options: ISceneManagerOption) {
-    this.options = Object.assign(defaultOption, options);
+    this.options = Object.assign(defaultOption(), options);
 
     // init renderer
     this.renderer = new WebGLRenderer();
@@ -82,7 +82,7 @@ export class SceneManager {
       scene = new Scene();
       this.sceneMap.set(name, scene);
       // 配置场景参数
-      this._update(name, params || {}, defaultParams)
+      this._update(name, params || {}, defaultParams())
     }
     return scene;
   }

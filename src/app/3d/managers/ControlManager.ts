@@ -24,11 +24,11 @@ interface IMoveInnerState extends IMoveState {
   left: number,
 }
 
-const defaultControlManagerOptions = {
+const defaultControlManagerOptions = () => ({
   container: document.body,
   showJoyStick: true,
   controlPointer: true,
-}
+})
 
 export interface IDestroyer {
   destory: (...args: any) => any
@@ -56,7 +56,7 @@ export class ControlManager {
   private destoryers: IDestroyer[] = [];
 
   constructor(options: IControlManagerOption) {
-    this.options = Object.assign(defaultControlManagerOptions, options);
+    this.options = Object.assign(defaultControlManagerOptions(), options);
   }
 
   public update(options: IControlManagerOption) {
