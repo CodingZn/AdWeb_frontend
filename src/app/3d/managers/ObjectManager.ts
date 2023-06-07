@@ -1,7 +1,7 @@
 import { AssetManager } from "./AssetManager";
-import { IRenderable, Renderable } from "../utils/Renderable";
+import { IRenderable, IRenderableParams, Renderable } from "../utils/Renderable";
 
-export interface IObjectParams extends IRenderable {
+export interface IObjectParams extends IRenderableParams {
   url?: string | string[],
   onLoad?: (resources: any[]) => any, 
 }
@@ -34,7 +34,7 @@ export class ObjectManager {
       }
     }
     // todo 改造成不同类型
-    let newRenderable = new Renderable(Object.assign(params as IRenderable, { name } as IRenderable));
+    let newRenderable = new Renderable(Object.assign(params as IRenderableParams, { name } as IRenderable));
     // 加载物体模型，加载完成后回调 onLoad
     if (params?.url) {
       const url = params.url as string | string[];
@@ -73,7 +73,7 @@ export class ObjectManager {
   public getAsync(name: string, params?: IObjectParams) {
     const self = this;
     return new Promise((resolve) => {
-      const newParams = params || {};
+      const newParams = params || { onLoad: () => {} };
       newParams.onLoad = (object) => {
         resolve(object);
       }

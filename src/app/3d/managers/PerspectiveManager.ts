@@ -1,5 +1,5 @@
-import { Camera, Object3D, PerspectiveCamera, Scene } from "three";
-import { Renderable } from "../utils/Renderable";
+import { PerspectiveCamera } from "three";
+import { IPosition, IRenderable, Renderable } from "../utils/Renderable";
 
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,
@@ -15,6 +15,8 @@ export interface ICameraParams {
   targetX?: number,
   targetY?: number,
   targetZ?: number,
+  parent?: Renderable,
+  lookAt?: (state: IRenderable) => IPosition
 }
 
 interface IState extends ICameraParams {
@@ -75,16 +77,24 @@ export class PerspectiveManager {
    */
   public get(name: string | symbol, params?: ICameraParams) {
     let camera = this.cameraMap.get(name);
-    let state: ICameraParams;
+    let state: IState;
     if (camera === undefined) {
       const { options: { fov, near, far }, aspect } = this;
       // 创建相机和状态
       camera = new PerspectiveCamera(fov, aspect, near, far);     
       this.cameraMap.set(name, camera);
       state = Object.assign(defaultParams(), params);
-      this.cameraStateMap.set(name, state as IState);
+      this.cameraStateMap.set(name, state);
     } else {
-      state = params || {};
+      state = Object.assign(this.cameraStateMap.get(name) as IState, params);
+    }
+    // 如果有需要跟随的物体，坐标以其为参照初始化
+    if (params?.parent) {
+      const { x, y, z } = params.parent.state 
+      state.x += x;
+      state.y += y;
+      state.z += z;
+      this._follow(name, params.parent, params.lookAt);
     }
     this._update(name, state);
     return camera;
@@ -108,17 +118,25 @@ export class PerspectiveManager {
    * @param renderable 
    * @returns 
    */
-  public follow(renderable: Renderable | Object3D, lookAt: boolean = true) {
+  public follow(renderable: Renderable, lookAt?: (state: IRenderable) => IPosition) {
     if (this.activeName === null) {
       console.warn('No active camera to follow!');
       return;
     }
-    let object = renderable as Object3D;
-    if (renderable instanceof Renderable) {
-      object = renderable.object;
+    this._follow(this.activeName, renderable, lookAt);
+  }
+
+  /**
+   * 取消跟踪某个物体
+   * @param renderable 
+   * @returns 
+   */
+  public unfollow(renderable: Renderable) {
+    if (this.activeName === null) {
+      console.warn('No active camera to unfollow!');
+      return;
     }
-    object.add(this.camera as PerspectiveCamera);
-    lookAt && (this.camera?.lookAt(object.position));
+    renderable.unwatch(this.camera?.uuid as string);
   }
 
   /**
@@ -128,18 +146,9 @@ export class PerspectiveManager {
   public move(params: { x?: number, y?: number, z?: number }) {
     const { x, y, z } = params;
     const { camera } = this;
-    if (camera) {
-      let object;
-      const { parent } = camera;
-      if (parent === null || parent instanceof Scene) {
-        object = camera;
-      } else {
-        object = parent;
-      }
-      x && (object?.translateX(x));
-      y && (object?.translateY(y));
-      z && (object?.translateZ(z));
-    }
+    x && (camera?.translateX(x));
+    y && (camera?.translateY(y));
+    z && (camera?.translateZ(z));
   }
 
   /**
@@ -175,6 +184,24 @@ export class PerspectiveManager {
     const { x, y, z, targetX, targetY, targetZ } = state;
     camera.position.set(x, y, z);
     camera.lookAt(targetX, targetY, targetZ);
+  }
+
+  public _follow(name: string | symbol, renderable: Renderable, lookAt?: (state: IRenderable) => IPosition) {
+    const camera = this.cameraMap.get(name);
+    if (camera === undefined) return;
+    const self = this;
+    renderable.watch(camera.uuid as string, (state: IRenderable, oldState: IRenderable) => {
+      const { x: oldX, y: oldY, z: oldZ } = oldState;
+      const { x: newX, y: newY, z: newZ } = state;
+      const { x, y, z } = camera.position;
+      self._update(name, { x: x + newX - oldX, y: y + newY - oldY, z: z + newZ - oldZ });
+      if (lookAt === undefined) {
+        camera.lookAt(newX, newY, newZ)
+      } else {
+        const { x, y, z } = lookAt(state);
+        camera.lookAt(x, y, z);
+      }
+    })
   }
 
   private onResize() {

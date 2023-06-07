@@ -1,14 +1,25 @@
-import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial } from "three";
+import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial, Euler } from "three";
 
-export interface Position { 
+export interface IPosition { 
+  x: number, 
+  y: number, 
+  z: number 
+}
+
+export interface IEuler {
   x?: number, 
   y?: number, 
   z?: number 
 }
-export interface IRenderable extends Position {
+
+export interface IRenderableParams {
+  x?: number, 
+  y?: number, 
+  z?: number,
   name?: string,
   color?: string,
-  visible?: boolean
+  visible?: boolean,
+  euler?: IEuler
 }
 
 export interface ITransformType {
@@ -23,29 +34,35 @@ export interface ITransformType {
   translateZ?: number,
 }
 
-export interface IRenderableDefault extends IRenderable, Position {
+export interface IRenderable extends IRenderableParams, IPosition {
   name: string,
-  color: string,
   visible: boolean,
   x: number, 
   y: number, 
-  z: number
+  z: number,
+  euler: IEuler
 }
 
-export const defaultRenderableParams: () => IRenderableDefault = () => ({
+export const defaultRenderableParams: () => IRenderable = () => ({
   name: '',
   x: 0,
   y: 0,
   z: 0,
   color: '#ffffff',
   visible: true,
+  euler: {
+    x: 0,
+    y: 0,
+    z: 0
+  }
 })
 
 export class Renderable {
   public object: Object3D;
   private name: string = '';
+  private watchers: Map<string | number | symbol, (newState: IRenderable, oldState: IRenderable) => any> = new Map();
 
-  constructor(params?: IRenderable) {
+  constructor(params?: IRenderableParams) {
     this.object = new Group();
     if (params !== undefined) {
       this._update(defaultRenderableParams(), params);
@@ -53,16 +70,25 @@ export class Renderable {
   }
 
   public get state(): IRenderable {
-    const { position: { x, y, z }, visible } = this.object;
+    const { 
+      position: { x, y, z }, 
+      rotation: { x: ex, y: ey, z: ez }, 
+      visible 
+    } = this.object;
     const { name } = this;
-    return { name, x, y, z, visible };
+    return { name, x, y, z, visible, euler: { x: ex, y: ey, z: ez } };
   }
 
-  public update(params: IRenderable) {
+  public get parent() {
+    return this.object.parent;
+  }
+
+  public update(params: IRenderableParams) {
     return this._update(this.state, params);
   }
 
   public transform(transform: ITransformType) {
+    const oldState = this.state;
     Object.keys(transform).forEach(type => {
       const arg = transform[type as keyof ITransformType] as number;
       let fn;
@@ -80,10 +106,10 @@ export class Renderable {
       let v = transform[`scale${d.toUpperCase()}` as keyof ITransformType];
       if (v === undefined) v = 1;
       const vold = scale[d as keyof Vector3] as number;
-      scale[d as keyof Position] = v * vold;
+      scale[d as keyof IPosition] = v * vold;
     }
     this.object.scale.copy(scale);
-    const { x, y, z } = this.object.position;
+    this.notify(oldState);
     return this;
   }
 
@@ -94,6 +120,23 @@ export class Renderable {
       this.object.add(renderable as Object3D);
     }
     return this;
+  }
+
+  /**
+   * 监听该物体的移动更新等操作
+   * @param name 
+   * @param cb 
+   */
+  public watch(name: string | number | symbol, cb: (newState: IRenderable, oldState: IRenderable) => any) {
+    this.watchers.set(name, cb);
+  }
+
+  /**
+   * 取消监听该物体的移动更新等操作
+   * @param name 
+   */
+  public unwatch(name: string | number | symbol) {
+    this.watchers.delete(name);
   }
 
   public onLoad(resources: any[]) {
@@ -126,17 +169,27 @@ export class Renderable {
     return this;
   }
 
-  protected _update(oldState: IRenderable, state: IRenderable) {
-    const newState = Object.assign(oldState, state) as IRenderableDefault;
-    const { name, x, y, z, color, visible } = newState;
+  protected _update(oldState: IRenderable, state: IRenderableParams) {
+    const newState = { ...oldState, ...state } as IRenderable;
+    const { 
+      name, 
+      x, y, z, 
+      euler: { x: ex, y: ey, z: ez }, 
+      color, 
+      visible } = newState;
     this.object.position.set(x, y, z);
+    this.object.quaternion.setFromEuler(new Euler(ex, ey, ez));
     this.object.name = name;
     this.object.visible = visible;
     this.object.traverse(child => {
       // todo 修改子
 
     })
-    
+    this.notify(oldState);
     return this;
+  }
+
+  private notify(oldState: IRenderable) {
+    this.watchers.forEach(cb => cb(this.state, oldState));
   }
 }

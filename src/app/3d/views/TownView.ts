@@ -13,7 +13,7 @@ export class TownView extends View {
   private background: CubeTexture | null = null;
   constructor(option: ITownViewOption) {
     super(Object.assign(option, {
-      perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
+      perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
     }));
     const self = this;
     this.town = new Renderable().transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1 });

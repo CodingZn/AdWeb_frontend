@@ -18,6 +18,7 @@ export interface IManagers {
 export const PerspectiveType = {
   BACK: Symbol('back'),
   FIRST: Symbol('first'),
+  FRONT: Symbol('front'),
   FIXED: Symbol('fixed'),
 }
 
@@ -69,8 +70,19 @@ export abstract class View {
     this.perspectives = perspectives;
     this._name = name;
     // 初始化机位
-    this.perspectiveManager.get(PerspectiveType.BACK, { x: 0, y: 500, z: 500 })
-    this.perspectiveManager.get(PerspectiveType.FIRST, { x: 0, y: 20, z: 0 })
+    
+    this.perspectiveManager.get(PerspectiveType.FIRST, { 
+      x: 0, y: 20, z: 0, 
+      parent: localPlayer?.object,
+      lookAt: (state) => ({ x: state.x, y: 25, z: state.z + 100 }) })
+    this.perspectiveManager.get(PerspectiveType.BACK, {
+      x: 0, y: 50, z: -50, 
+      parent: localPlayer?.object, 
+      lookAt: (state) => ({ x: state.x, y: 25, z: state.z }) })
+    this.perspectiveManager.get(PerspectiveType.FRONT, { 
+      x: 0, y: 50, z: 50, 
+      parent: localPlayer?.object,
+      lookAt: (state) => ({ x: state.x, y: 25, z: state.z }) })
   }
 
   public get name() { return this._name; }
@@ -114,6 +126,9 @@ export abstract class View {
   public unmount() {
     this.beforeDestoryed();
     this.controlManager.unmount();
+    if (this.localPlayer !== null) {
+      this.perspectiveManager.unfollow(this.localPlayer.object);
+    }
     this.perspectiveManager.switch(null);
   }
 
@@ -204,28 +219,26 @@ export abstract class View {
     } else {
       this.localPlayer.object.update({ visible: true })
     }
-    const lookAt = active !== PerspectiveType.FIRST;
-    this.perspectiveManager.follow(this.localPlayer.object, lookAt);
 
     const { forward, right, up } = this.moveState;
     const speed = 10;
     const object = this.localPlayer.object.object;
     const matrix = object.matrixWorld.clone().invert();
     if (forward !== 0) {
-      let z = - forward * speed * dt;
+      let z = forward * speed * dt;
       // const dir = new Vector3(0, 0, z).applyMatrix4(matrix);
       // if (this.sceneManager.collide(object, dir) !== null) {
       //   z = 0;
       // }
-      this.perspectiveManager.move({ z });
+      this.localPlayer.move({ z });
     }
     if (right !== 0) {
-      let x = right * speed * dt;
+      let x = - right * speed * dt;
       // const dir = new Vector3(x, 0, 0).applyMatrix4(matrix);
       // if (this.sceneManager.collide(object, dir) !== null) {
       //   x = 0;
       // }
-      this.perspectiveManager.move({ x });
+      this.localPlayer.move({ x });
     }
   }
 }

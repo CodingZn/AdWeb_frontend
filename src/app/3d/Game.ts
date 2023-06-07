@@ -50,7 +50,10 @@ export class Game {
     const localPlayer = new LocalPlayer(
       { 
         name: 'steve', 
-        profileID: 0 
+        profileID: 0,
+        x: 0,
+        y: 0,
+        z: -150,
       }, 
       assetManager);
 

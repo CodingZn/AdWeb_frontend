@@ -1,9 +1,13 @@
 import { AssetManager } from "./managers/AssetManager";
-import { Renderable, IRenderable, defaultRenderableParams, ITransformType } from "./utils/Renderable";
+import { Renderable, defaultRenderableParams, ITransformType } from "./utils/Renderable";
 
-export interface IPlayerParams extends IRenderable {
+export interface IPlayerParams {
   name?: string,
   profileID?: number,
+  x?: number,
+  y?: number,
+  z?: number,
+  h?: number  // 朝向，弧度制。玩家目前只有一个方向可旋转
 }
 
 const defaultPlayerParams = () => ({
@@ -45,9 +49,13 @@ export class Player {
     this.params = Object.assign(this.params, params);
     const { profileID } = this.params;
     const profileName = ProfileMap[profileID as number];
-    const obj = new Renderable(this.params);
-    if (this.obj && this.obj.object.parent) {
-      this.obj.object.parent.remove(this.obj.object);
+    const { name, x, y, z, h } = this.params;
+    const obj = new Renderable({
+      name, x, y, z, euler: { y: h }
+    });
+    if (this.obj && this.obj.parent) {
+      this.obj.parent.remove(this.obj.object);
+      obj.update(this.obj.state);
     }
     this.obj = obj;
     const self = this;
@@ -62,6 +70,11 @@ export class Player {
       obj.onLoad([res]);
     });
     return this.transform(this.transformParams);
+  }
+
+  public move(params: { x?: number, y?: number, z?: number }) {
+    const { x, y, z } = params;
+    this.transform({ translateX: x || 0, translateY: y || 0, translateZ: z || 0 })
   }
 
   public transform(params: ITransformType) {

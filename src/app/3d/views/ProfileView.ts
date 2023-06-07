@@ -66,7 +66,7 @@ export class ProfileView extends View {
     
     profiles.forEach(profile => {
       sceneManager.add(profile.object);
-      profile.object.transform({ rotateY: dt * 1 })
+      profile.object.transform({ rotateY: dt })
     });
     
     sceneManager.render(camera);
