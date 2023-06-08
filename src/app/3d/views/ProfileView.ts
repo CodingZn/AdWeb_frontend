@@ -1,6 +1,7 @@
+import { assign, keys, random } from "lodash";
 import { AssetManager } from "../managers/AssetManager";
 import { Player, ProfileMap } from "../Player";
-import { IViewOption, IViewProps, PerspectiveType, View } from "./View"
+import { Actions, IActions, IViewOption, IViewProps, PerspectiveType, View } from "./View"
 
 export interface IProfileViewOption extends IViewOption {
   assetManager: AssetManager
@@ -21,7 +22,7 @@ export class ProfileView extends View {
   private _profileID = 0;
 
   constructor(options: IProfileViewOption) {
-    super(Object.assign(options, { 
+    super(assign(options, { 
       perspectives: [{
         type: PerspectiveType.FIXED,
         params: {
@@ -66,6 +67,15 @@ export class ProfileView extends View {
     
     profiles.forEach(profile => {
       sceneManager.add(profile.object);
+      if (profile.actionDuration > 2000) {
+        if (profile.action === Actions.IDLE) {
+          const actions = keys(Actions);
+          profile.action = Actions[actions[random(actions.length - 1)] as keyof IActions];
+        } else {
+          profile.action = Actions.IDLE;
+        }
+      }
+      profile.act(dt);
       profile.object.transform({ rotateY: dt })
     });
     

@@ -1,3 +1,4 @@
+import { assign } from "lodash";
 import { CubeTexture, Mesh, MeshBasicMaterial } from "three";
 import { Renderable } from "../utils/Renderable";
 import { IViewOption, PerspectiveType, View } from "./View"
@@ -12,7 +13,7 @@ export class TownView extends View {
   private town: Renderable;
   private background: CubeTexture | null = null;
   constructor(option: ITownViewOption) {
-    super(Object.assign(option, {
+    super(assign(option, {
       perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
     }));
     const self = this;

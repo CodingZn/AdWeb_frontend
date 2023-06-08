@@ -1,6 +1,8 @@
 import { assign } from "lodash";
+import { AnimationClip, AnimationMixer, AnimationUtils } from "three";
 import { AssetManager } from "./managers/AssetManager";
 import { Renderable, defaultRenderableParams, ITransformType } from "./utils/Renderable";
+import { ActionMap, Actions } from "./views/View";
 
 export interface IPlayerParams {
   name?: string,
@@ -27,18 +29,25 @@ const defaultPlayerParams = () => ({
 })
 
 export const ProfileMap = [
-  'Doctor',
-  'BeachBabe',
-  'FireFighter',
-  'Robber',
-  'Policeman',
+  'BeachBabe', 
+  'BusinessMan', 
+  'Doctor', 
+  'FireFighter', 
+  'Policeman', 
   'Prostitute',
-  'Punk',
-  'Waitress',
+  'Punk', 
+  'RiotCop', 
+  'Robber', 
+  'Sheriff', 
+  'Waitress'
 ];
 
 export class Player {
   private obj: Renderable;
+  public mixer: AnimationMixer | null = null;
+  private idleAnim: AnimationClip | null = null;
+  private _action: string = '';
+  private _actionTime: number = 0;
   private assetManager: AssetManager;
   private _profileID: number | undefined;
 
@@ -75,6 +84,31 @@ export class Player {
     return this;
   }
 
+  public get action(){ return this._action; }
+
+  public set action(name: string){
+		if (this._action == name || this.mixer === null) return;
+    let anim = ActionMap.get(name);
+    
+    if (anim === undefined && this.idleAnim !== null) {
+      anim = this.idleAnim;
+    };
+    if (anim !== undefined) {
+      this._action = name;
+		  this._actionTime = Date.now();
+      this.mixer.stopAllAction();
+      const clip = anim; 
+      const action = this.mixer.clipAction(clip);
+
+      action.fadeIn(0.5);
+      action.play();
+    }
+	}
+
+  public act(dt: number) { this.mixer && this.mixer.update(dt); }
+
+  public get actionDuration() { return Date.now() - this._actionTime; }
+
   private _update(oldParams: IPlayerParams, params: IPlayerParams) {
     const { name, profileID, x, y, z, h } = assign(oldParams, params);
 
@@ -93,6 +127,9 @@ export class Player {
       this.assetManager.get(`fbx/people/${profileName}.fbx`, { forceUpdate: true })
       .then((res) => {
         obj.onLoad([res]);
+        self.idleAnim = res.animations[0];
+        res.mixer = self.mixer = new AnimationMixer(res);
+        self.action = Actions.IDLE;
         return Promise.resolve(self.assetManager);
       })
       .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))

@@ -1,5 +1,5 @@
-import { assign } from "lodash";
-import { Camera, PerspectiveCamera, Scene, Vector3 } from "three";
+import { assign, keys } from "lodash";
+import { AnimationClip, Camera, PerspectiveCamera, Scene, Vector3 } from "three";
 import { LocalPlayer } from "../LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
 import { ControlManager, IDestroyer, IMoveState } from "../managers/ControlManager";
@@ -24,6 +24,30 @@ export const PerspectiveType = {
   FIXED: Symbol('fixed'),
 }
 
+export interface IActions {
+  IDLE: string,
+  WALKING: string,
+  WALKING_BACKWARDS: string,
+  TURN: string,
+  RUNNING: string,
+  POINTING: string,
+  TALKING: string,
+  POINTING_GESTURE: string,
+  DRIVING: string,
+}
+
+export const Actions: IActions = {
+  IDLE: 'Idle',
+  WALKING: 'Walking', 
+  WALKING_BACKWARDS: 'Walking Backwards', 
+  TURN: 'Turn', 
+  RUNNING: 'Running', 
+  POINTING: 'Pointing', 
+  TALKING: 'Talking', 
+  POINTING_GESTURE: 'Pointing Gesture',
+  DRIVING: 'Driving'
+};
+
 export interface IViewOption extends IManagers {
   name: string,
   localPlayer?: LocalPlayer,
@@ -38,11 +62,12 @@ const defaultViewOption = () => ({
   perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
 })
 
-const sgn = (v: number) => v === 0 
-                                 ? 0 
-                                 : v > 0 
-                                  ? 1 
-                                  : -1;
+const sgn = (v: number) => v === 0 ? 0 
+                                   : v > 0 
+                                     ? 1 
+                                     : -1;
+
+export const ActionMap = new Map<string, AnimationClip>();
 
 export abstract class View {
   protected _name: string; 
@@ -96,6 +121,14 @@ export abstract class View {
       x: 0, y: 35, z: 35, 
       parent: localPlayer?.object,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
+    // 初始化动画
+    const self = this;
+    keys(Actions).forEach(key => {
+      const anim = Actions[key as keyof IActions];
+      anim !== Actions.IDLE && assetManager.get(`fbx/anims/${anim}.fbx`).then(res => {
+        ActionMap.set(anim, res.animations[0])
+      }) 
+    })    
   }
 
   public get name() { return this._name; }
@@ -248,7 +281,22 @@ export abstract class View {
     }
 
     const { forward, right, up } = this.moveState;
-    const speed = 20;
+
+    let speed = 20;
+    // 动作
+    if (forward !== 0 || right !== 0) {
+      if (this.localPlayer.action === Actions.RUNNING) {
+        speed = 50;
+      } else if (this.localPlayer.action === Actions.WALKING && this.localPlayer.actionDuration > 2000) {
+        this.localPlayer.action = Actions.RUNNING;
+        speed = 50;
+      } else {
+        this.localPlayer.action = Actions.WALKING;
+      }
+    } else {
+      this.localPlayer.action = Actions.IDLE;
+    }
+    this.localPlayer.act(dt);
     const object = this.localPlayer.object.object;
     const quaternion = object.quaternion.clone();
     if (forward !== 0) {
@@ -269,5 +317,6 @@ export abstract class View {
       }
       this.localPlayer.move({ x });
     }
+    
   }
 }
