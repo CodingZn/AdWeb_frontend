@@ -1,6 +1,6 @@
 import { JoyStick } from "../lib/JoyStick";
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
-import { Camera } from "three";
+import { Camera, Vector3 } from "three";
 export interface IMoveState {
   forward: number,
   right: number,
@@ -56,13 +56,13 @@ export class ControlManager {
   private pointerLockControls: PointerLockControls | null = null;
   private destoryers: IDestroyer[] = [];
   private customDestoryers: IDestroyer[] = [];
-  private _locked: boolean = false;
+  private _lastDirection: Vector3 | null = null;
 
   constructor(options: IControlManagerOption) {
     this.options = Object.assign(defaultControlManagerOptions(), options);
   }
 
-  public get locked() { return this._locked; }
+  public get locked() { return this.pointerLockControls?.isLocked || false; }
 
   public update(options: IControlManagerOption) {
     this.options = Object.assign(this.options, options);
@@ -123,6 +123,13 @@ export class ControlManager {
     this.customDestoryers.push(destoryer);
     return destoryer;
   }
+
+  public get direction() {
+    return this.pointerLockControls?.getDirection(new Vector3()).normalize() 
+        || this.camera?.getWorldDirection(new Vector3())
+        || new Vector3();; 
+  }
+
 
   private bindEvents() {
     this.destoryers.push(this._on('keydown', this.onKeyDown.bind(this)));
@@ -222,16 +229,12 @@ export class ControlManager {
     this.pointerLockControls?.lock();
   }
 
-  private onLock(e: Event) {
-    this.locked = true;
-  }
+  private onLock(e: Event) { }
 
   private onUnLock(e: Event) {
     if (this.joyStick !== null) {
       this.joyStick.mount();
     }
-    this.locked = false;
   }
 
-  private set locked(v) { this._locked = v; }
 }

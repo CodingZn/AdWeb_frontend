@@ -79,9 +79,9 @@ export class Renderable {
     return { name, x, y, z, visible, euler: { x: ex, y: ey, z: ez } };
   }
 
-  public get parent() {
-    return this.object.parent;
-  }
+  public get parent() { return this.object.parent; }
+
+  public get direction() { return this.object.getWorldDirection(new Vector3()).normalize(); }
 
   public update(params: IRenderableParams) {
     return this._update(this.state, params);
@@ -124,6 +124,7 @@ export class Renderable {
 
   public copy(renderable: Renderable) {
     this.update(renderable.state);
+    this.object.applyMatrix4(renderable.object.matrix);
     const { watchers } = this;
     watchers.clear();
     renderable.watchers.forEach((value, key) => {

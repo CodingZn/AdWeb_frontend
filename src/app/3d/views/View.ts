@@ -1,3 +1,4 @@
+import { assign } from "lodash";
 import { Camera, PerspectiveCamera, Scene, Vector3 } from "three";
 import { LocalPlayer } from "../LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
@@ -37,6 +38,12 @@ const defaultViewOption = () => ({
   perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
 })
 
+const sgn = (v: number) => v === 0 
+                                 ? 0 
+                                 : v > 0 
+                                  ? 1 
+                                  : -1;
+
 export abstract class View {
   protected _name: string; 
   protected sceneManager: SceneManager;
@@ -61,7 +68,7 @@ export abstract class View {
       controlManager,
       localPlayer,
       perspectives
-    } = Object.assign(defaultViewOption(), options);
+    } = assign(defaultViewOption(), options);
     this.sceneManager = sceneManager;
     this.objectManager = objectManager;
     this.assetManager = assetManager;
@@ -78,15 +85,15 @@ export abstract class View {
       return null;
     }
     this.perspectiveManager.get(PerspectiveType.FIRST, {
-      x: 0, y: 20, z: 0, 
+      x: 0, y: 25, z: 0, 
       parent: localPlayer?.object,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
-      x: 0, y: 50, z: -50, 
+      x: 0, y: 35, z: -35, 
       parent: localPlayer?.object, 
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
-      x: 0, y: 50, z: 50, 
+      x: 0, y: 35, z: 35, 
       parent: localPlayer?.object,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
   }
@@ -225,30 +232,40 @@ export abstract class View {
       this.localPlayer.object.update({ visible: true })
     }
 
-    // todo
     // lock 状态下，玩家角度由相机更新
     if (this.controlManager.locked) {
-      // console.log(this.camera?.rotation.y)
-      // this.localPlayer.update({ h: this.camera?.rotation.y })
+      const { direction } = this.controlManager;
+      const { direction: playerDir } = this.localPlayer.object;
+      // 只有 xz 平面上的转动
+      direction.setY(0).normalize();
+      playerDir.setY(0).normalize();
+      // 计算 xy 平面上的旋转弧度
+			if (this.perspectiveManager.active === PerspectiveType.FRONT) playerDir.negate();
+			const rad = Math.acos(playerDir.dot(direction)) * sgn(playerDir.cross(direction).y);
+      if (Math.abs(rad) > 0.01) {
+				this.localPlayer.transform({ rotateY: rad })
+			}
     }
 
     const { forward, right, up } = this.moveState;
-    const speed = 50;
+    const speed = 20;
     const object = this.localPlayer.object.object;
-    const matrix = object.matrixWorld.clone().invert();
+    const quaternion = object.quaternion.clone();
     if (forward !== 0) {
       let z = forward * speed * dt;
-      const dir = new Vector3(0, 0, z).applyMatrix4(matrix);
-      if (this.sceneManager.collide(object, dir, 30) !== null) {
-        z *= -1;
+      const dir = new Vector3(0, 0, z).applyQuaternion(quaternion);
+      const intersect = this.sceneManager.collide(object, dir, 25)
+      if (intersect !== null) {
+        z = -sgn(z) *  (30 - intersect.distance);
       }
       this.localPlayer.move({ z });
     }
     if (right !== 0) {
       let x = - right * speed * dt;
-      const dir = new Vector3(x, 0, 0).applyMatrix4(matrix);
-      if (this.sceneManager.collide(object, dir, 30) !== null) {
-        x *= -1;
+      const dir = new Vector3(x, 0, 0).applyQuaternion(quaternion);
+      const intersect = this.sceneManager.collide(object, dir, 25)
+      if (intersect !== null) {
+        x = -sgn(x) *  (30 - intersect.distance);
       }
       this.localPlayer.move({ x });
     }

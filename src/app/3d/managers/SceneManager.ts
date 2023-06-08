@@ -161,9 +161,6 @@ export class SceneManager {
     const raycaster = new Raycaster(pos, dirVec);
     const colliderSet = this.stateMap.get(this.activeName)?.colliders as Set<Object3D>;
     const intersect = raycaster.intersectObjects(Array.from(colliderSet));
-    if (intersect.length > 0) {
-      console.log(dirVec, intersect[0].distance);
-    }
     if (intersect.length > 0 && intersect[0].distance < (distance || 10)) {
 			return intersect[0];
 		} else {
