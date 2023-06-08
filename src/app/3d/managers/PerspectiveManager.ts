@@ -12,20 +12,14 @@ export interface ICameraParams {
   x?: number, 
   y?: number,
   z?: number,
-  targetX?: number,
-  targetY?: number,
-  targetZ?: number,
   parent?: Renderable,
-  lookAt?: (state: IRenderable) => IPosition
+  lookAt?: (state: IRenderable) => IPosition | any
 }
 
 interface IState extends ICameraParams {
   x: number, 
   y: number,
   z: number,
-  targetX: number,
-  targetY: number,
-  targetZ: number,
 }
 
 const defaultOption: () => IPerspectiveManagerOption = () => ({
@@ -39,9 +33,6 @@ const defaultParams: () => IState = () => ({
   x: 0, 
   y: 0,
   z: 10,
-  targetX: 0,
-  targetY: 0,
-  targetZ: 0,
 })
 
 export class PerspectiveManager {
@@ -116,6 +107,7 @@ export class PerspectiveManager {
   /**
    * 跟踪某个物体
    * @param renderable 
+   * @param lookAt 可指定获取焦点的方式
    * @returns 
    */
   public follow(renderable: Renderable, lookAt?: (state: IRenderable) => IPosition) {
@@ -181,12 +173,11 @@ export class PerspectiveManager {
     const camera = this.cameraMap.get(name) as PerspectiveCamera;
     const state = Object.assign(oldState, params) as IState;
     this.cameraStateMap.set(name, state);
-    const { x, y, z, targetX, targetY, targetZ } = state;
+    const { x, y, z } = state;
     camera.position.set(x, y, z);
-    camera.lookAt(targetX, targetY, targetZ);
   }
 
-  public _follow(name: string | symbol, renderable: Renderable, lookAt?: (state: IRenderable) => IPosition) {
+  public _follow(name: string | symbol, renderable: Renderable, lookAt?: (state: IRenderable) => IPosition | any) {
     const camera = this.cameraMap.get(name);
     if (camera === undefined) return;
     const self = this;
@@ -199,7 +190,9 @@ export class PerspectiveManager {
         camera.lookAt(newX, newY, newZ)
       } else {
         const { x, y, z } = lookAt(state);
-        camera.lookAt(x, y, z);
+        if (x !== undefined && y !== undefined && z !== undefined) {
+          camera.lookAt(x, y, z);
+        }
       }
     })
   }

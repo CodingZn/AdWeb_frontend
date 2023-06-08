@@ -1,10 +1,11 @@
-import { Camera, Scene, Vector3 } from "three";
+import { Camera, PerspectiveCamera, Scene, Vector3 } from "three";
 import { LocalPlayer } from "../LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
 import { ControlManager, IDestroyer, IMoveState } from "../managers/ControlManager";
 import { ObjectManager } from "../managers/ObjectManager";
 import { ICameraParams, PerspectiveManager } from "../managers/PerspectiveManager";
 import { SceneManager } from "../managers/SceneManager";
+import { IRenderable } from "../utils/Renderable";
 
 export interface IManagers {
   sceneManager: SceneManager,
@@ -70,19 +71,24 @@ export abstract class View {
     this.perspectives = perspectives;
     this._name = name;
     // 初始化机位
-    
-    this.perspectiveManager.get(PerspectiveType.FIRST, { 
+    const lockedLookAtHandler = (state: IRenderable) => {
+      if (controlManager.locked) {
+        return {}
+      }
+      return null;
+    }
+    this.perspectiveManager.get(PerspectiveType.FIRST, {
       x: 0, y: 20, z: 0, 
       parent: localPlayer?.object,
-      lookAt: (state) => ({ x: state.x, y: 25, z: state.z + 100 }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
       x: 0, y: 50, z: -50, 
       parent: localPlayer?.object, 
-      lookAt: (state) => ({ x: state.x, y: 25, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
       x: 0, y: 50, z: 50, 
       parent: localPlayer?.object,
-      lookAt: (state) => ({ x: state.x, y: 25, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
   }
 
   public get name() { return this._name; }
@@ -126,9 +132,6 @@ export abstract class View {
   public unmount() {
     this.beforeDestoryed();
     this.controlManager.unmount();
-    if (this.localPlayer !== null) {
-      this.perspectiveManager.unfollow(this.localPlayer.object);
-    }
     this.perspectiveManager.switch(null);
   }
 
@@ -198,11 +201,13 @@ export abstract class View {
     }
     index = (index + 1) % perspectives.length;
     const perpective = perspectives[index];
+    
     if (typeof perpective === 'object') {
       this.camera = perspectiveManager.switch(perpective.type, perpective.params);
     } else {
       this.camera = perspectiveManager.switch(perpective as string | symbol);
     }
+    this.controlManager.update({ camera: this.camera as PerspectiveCamera  });
   }
 
   /**
@@ -220,24 +225,31 @@ export abstract class View {
       this.localPlayer.object.update({ visible: true })
     }
 
+    // todo
+    // lock 状态下，玩家角度由相机更新
+    if (this.controlManager.locked) {
+      // console.log(this.camera?.rotation.y)
+      // this.localPlayer.update({ h: this.camera?.rotation.y })
+    }
+
     const { forward, right, up } = this.moveState;
-    const speed = 10;
+    const speed = 50;
     const object = this.localPlayer.object.object;
     const matrix = object.matrixWorld.clone().invert();
     if (forward !== 0) {
       let z = forward * speed * dt;
-      // const dir = new Vector3(0, 0, z).applyMatrix4(matrix);
-      // if (this.sceneManager.collide(object, dir) !== null) {
-      //   z = 0;
-      // }
+      const dir = new Vector3(0, 0, z).applyMatrix4(matrix);
+      if (this.sceneManager.collide(object, dir, 30) !== null) {
+        z *= -1;
+      }
       this.localPlayer.move({ z });
     }
     if (right !== 0) {
       let x = - right * speed * dt;
-      // const dir = new Vector3(x, 0, 0).applyMatrix4(matrix);
-      // if (this.sceneManager.collide(object, dir) !== null) {
-      //   x = 0;
-      // }
+      const dir = new Vector3(x, 0, 0).applyMatrix4(matrix);
+      if (this.sceneManager.collide(object, dir, 30) !== null) {
+        x *= -1;
+      }
       this.localPlayer.move({ x });
     }
   }

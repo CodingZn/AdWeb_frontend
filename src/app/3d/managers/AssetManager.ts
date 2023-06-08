@@ -29,6 +29,11 @@ export interface IAssetManagerOption {
   assetsPath: string,
 }
 
+export interface IAssetManagerGetOption {
+  loader?: Loader,
+  forceUpdate?: boolean
+}
+
 // loader 实例缓存处理
 type Constructor<T> = new (...args: any) => T;
 const loaderCacheMap: Map<Constructor<Loader>, Loader> = new Map();
@@ -69,20 +74,20 @@ export class AssetManager {
    * @param loader 
    * @returns 
    */
-  public get(url: string | string[], loader?: Loader): Promise<any> | Promise<any[]> {
+  public get(url: string | string[], option?: IAssetManagerGetOption): Promise<any> | Promise<any[]> {
     if (Array.isArray(url)) {
       const urls = url as string[];
       return this.loadAssets(urls);
     } else {
       const { assetMap } = this;
       const res = assetMap.get(url);
-      if (res === undefined) {
-        return this.loadAsset(url, loader as ILoader | undefined).then(res => {
+      if (option?.forceUpdate || res === undefined) {
+        return this.loadAsset(url, option?.loader as ILoader | undefined).then(res => {
           assetMap.set(url, res);
           return res;
         });
       }
-      return Promise.resolve(res.clone());
+      return Promise.resolve(res);
     }
   }
 

@@ -122,6 +122,16 @@ export class Renderable {
     return this;
   }
 
+  public copy(renderable: Renderable) {
+    this.update(renderable.state);
+    const { watchers } = this;
+    watchers.clear();
+    renderable.watchers.forEach((value, key) => {
+      watchers.set(key, value);
+    })
+    
+  }
+
   /**
    * 监听该物体的移动更新等操作
    * @param name 
@@ -167,6 +177,11 @@ export class Renderable {
       }
     });
     return this;
+  }
+
+  public destory() {
+    this.watchers.clear();
+    this.object.clear();
   }
 
   protected _update(oldState: IRenderable, state: IRenderableParams) {
