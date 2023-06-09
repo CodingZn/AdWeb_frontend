@@ -10,21 +10,27 @@ export interface IPlayerParams {
   x?: number,
   y?: number,
   z?: number,
-  h?: number  // 朝向，弧度制。玩家目前只有一个方向可旋转
+  h?: number  // 朝向，弧度制
+  pb?: number  // 朝向，弧度制
+  action?: string,
 }
 
-export interface IPlayerState {
+export interface IPlayerState extends IPlayerParams {
   name: string,
   profileID: number,
   x: number,
   y: number,
   z: number,
-  h: number
+  h: number,
+  pb: number,
+  action: string,
 }
 
-const defaultPlayerParams = () => ({
+const defaultPlayerParams: () => IPlayerState = () => ({
   profileID: 0,
   h: 0,
+  pb: 0,
+  action: Actions.IDLE,
   ...defaultRenderableParams()
 })
 
@@ -46,20 +52,20 @@ export class Player {
   private obj: Renderable;
   public mixer: AnimationMixer | null = null;
   private idleAnim: AnimationClip | null = null;
+  private assetManager: AssetManager;
   private _action: string = '';
   private _actionTime: number = 0;
-  private assetManager: AssetManager;
-  private _profileID: number | undefined;
+  private _profileID: number = -1;
 
   constructor(params: IPlayerParams, assetManager: AssetManager) {
     this.assetManager = assetManager;
     this.obj = this._update(defaultPlayerParams(), params).obj;
   }
 
-  public get state(): IPlayerParams {
-    const { name, x, y, z, euler: { y: h } }  = this.object.state;
-    const { profileID } = this;
-    return { name, profileID, x, y, z, h }
+  public get state(): IPlayerState {
+    const { name, x, y, z, euler: { x: pb, y: h } } = this.object.state;
+    const { profileID, action } = this;
+    return { name, profileID, x, y, z, h, pb, action };
   }
 
   public get object() {
@@ -69,6 +75,8 @@ export class Player {
   public get name() { return this.state.name; }
   
   public get profileID() { return this._profileID; }
+
+  public get action(){ return this._action; }
 
   public update(params: IPlayerParams) {
     return this._update(this.state, params);
@@ -84,9 +92,7 @@ export class Player {
     return this;
   }
 
-  public get action(){ return this._action; }
-
-  public set action(name: string){
+  private set action(name: string){
 		if (this._action == name || this.mixer === null) return;
     let anim = ActionMap.get(name);
     
@@ -100,7 +106,8 @@ export class Player {
       const clip = anim; 
       const action = this.mixer.clipAction(clip);
 
-      action.fadeIn(0.5);
+      // todo 抬手异常
+      // action.fadeIn(0.5);
       action.play();
     }
 	}
@@ -109,9 +116,8 @@ export class Player {
 
   public get actionDuration() { return Date.now() - this._actionTime; }
 
-  private _update(oldParams: IPlayerParams, params: IPlayerParams) {
-    const { name, profileID, x, y, z, h } = assign(oldParams, params);
-
+  private _update(oldParams: IPlayerState, params: IPlayerParams) {
+    const { name, profileID, x, y, z, h, pb, action } = assign(oldParams, params);
     if (this._profileID !== profileID) {
       this._profileID = profileID;
       // 需要重新加载模型
@@ -129,13 +135,15 @@ export class Player {
         obj.onLoad([res]);
         self.idleAnim = res.animations[0];
         res.mixer = self.mixer = new AnimationMixer(res);
-        self.action = Actions.IDLE;
+        self.action = action;
         return Promise.resolve(self.assetManager);
       })
       .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))
       .then((res) => obj.onLoad([res]));
-    } 
-    this.obj.update({ name, x, y, z, euler: { y: h } });
+    } else {
+      this.action = action;
+    }
+    this.obj.update({ name, x, y, z, euler: { x: pb, y: h, z: pb } });
     return this;
   }
 }

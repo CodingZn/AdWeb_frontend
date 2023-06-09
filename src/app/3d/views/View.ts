@@ -114,13 +114,13 @@ export abstract class View {
       parent: localPlayer?.object,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
-      x: 0, y: 35, z: -35, 
+      x: 0, y: 45, z: -55, 
       parent: localPlayer?.object, 
-      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
-      x: 0, y: 35, z: 35, 
+      x: 0, y: 45, z: 55, 
       parent: localPlayer?.object,
-      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     // 初始化动画
     const self = this;
     keys(Actions).forEach(key => {
@@ -277,8 +277,8 @@ export abstract class View {
       playerDir.setY(0).normalize();
       // 计算 xy 平面上的旋转弧度
 			if (this.perspectiveManager.active === PerspectiveType.FRONT) playerDir.negate();
-			const rad = Math.acos(playerDir.dot(direction)) * sgn(playerDir.cross(direction).y);
-      if (Math.abs(rad) > 0.01) {
+			const rad = direction.angleTo(playerDir) * sgn(playerDir.cross(direction).y);
+      if (Math.abs(rad) > 0.001) {
 				this.localPlayer.transform({ rotateY: rad })
 			}
     }
@@ -287,36 +287,35 @@ export abstract class View {
 
     let speed = 20;
     // 动作
+    let action = Actions.IDLE;
     if (forward !== 0 || right !== 0) {
-      if (this.localPlayer.action === Actions.RUNNING) {
+      if (this.localPlayer.action === Actions.RUNNING ||
+        (this.localPlayer.action === Actions.WALKING && this.localPlayer.actionDuration > 2000)) {
         speed = 50;
-      } else if (this.localPlayer.action === Actions.WALKING && this.localPlayer.actionDuration > 2000) {
-        this.localPlayer.action = Actions.RUNNING;
-        speed = 50;
+        action = Actions.RUNNING;
       } else {
-        this.localPlayer.action = Actions.WALKING;
+        action = Actions.WALKING;
       }
-    } else {
-      this.localPlayer.action = Actions.IDLE;
     }
+    this.localPlayer.update({ action });
     this.localPlayer.act(dt);
     const object = this.localPlayer.object.object;
     const quaternion = object.quaternion.clone();
     if (forward !== 0) {
       let z = forward * speed * dt;
       const dir = new Vector3(0, 0, z).applyQuaternion(quaternion);
-      const intersect = this.sceneManager.collide(object, dir, 25)
+      const intersect = this.sceneManager.collide(object, dir, 20)
       if (intersect !== null) {
-        z = -sgn(z) *  (30 - intersect.distance);
+        z = -sgn(z) *  (20 - intersect.distance);
       }
       this.localPlayer.move({ z });
     }
     if (right !== 0) {
       let x = - right * speed * dt;
       const dir = new Vector3(x, 0, 0).applyQuaternion(quaternion);
-      const intersect = this.sceneManager.collide(object, dir, 25)
+      const intersect = this.sceneManager.collide(object, dir, 20)
       if (intersect !== null) {
-        x = -sgn(x) *  (30 - intersect.distance);
+        x = -sgn(x) *  (20 - intersect.distance);
       }
       this.localPlayer.move({ x });
     }

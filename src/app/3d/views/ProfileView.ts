@@ -70,9 +70,9 @@ export class ProfileView extends View {
       if (profile.actionDuration > 2000) {
         if (profile.action === Actions.IDLE) {
           const actions = keys(Actions);
-          profile.action = Actions[actions[random(actions.length - 1)] as keyof IActions];
+          profile.update({ action: Actions[actions[random(actions.length - 1)] as keyof IActions] });
         } else {
-          profile.action = Actions.IDLE;
+          profile.update({ action: Actions.IDLE });
         }
       }
       profile.act(dt);
