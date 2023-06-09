@@ -7,9 +7,9 @@ export interface IPosition {
 }
 
 export interface IEuler {
-  x?: number, 
-  y?: number, 
-  z?: number 
+  x: number, 
+  y: number, 
+  z: number 
 }
 
 export interface IRenderableParams {
@@ -19,7 +19,11 @@ export interface IRenderableParams {
   name?: string,
   color?: string,
   visible?: boolean,
-  euler?: IEuler
+  euler?: {
+    x?: number, 
+    y?: number, 
+    z?: number,
+  }
 }
 
 export interface ITransformType {

@@ -1,4 +1,5 @@
-import { PerspectiveCamera } from "three";
+import { cloneDeep } from "lodash";
+import { Object3D, PerspectiveCamera, Vector3 } from "three";
 import { IPosition, IRenderable, Renderable } from "../utils/Renderable";
 
 export interface IPerspectiveManagerOption {
@@ -72,7 +73,7 @@ export class PerspectiveManager {
     if (camera === undefined) {
       const { options: { fov, near, far }, aspect } = this;
       // 创建相机和状态
-      camera = new PerspectiveCamera(fov, aspect, near, far);     
+      camera = new PerspectiveCamera(fov, aspect, near, far);    
       this.cameraMap.set(name, camera);
       state = Object.assign(defaultParams(), params);
       this.cameraStateMap.set(name, state);
@@ -81,11 +82,7 @@ export class PerspectiveManager {
     }
     // 如果有需要跟随的物体，坐标以其为参照初始化
     if (params?.parent) {
-      const { x, y, z } = params.parent.state 
-      state.x += x;
-      state.y += y;
-      state.z += z;
-      this._follow(name, params.parent, params.lookAt);
+      this._follow(name, params.parent, cloneDeep(state), params.lookAt);
     }
     this._update(name, state);
     return camera;
@@ -115,7 +112,7 @@ export class PerspectiveManager {
       console.warn('No active camera to follow!');
       return;
     }
-    this._follow(this.activeName, renderable, lookAt);
+    this._follow(this.activeName, renderable, { x: 0, y: 0, z: 0 }, lookAt);
   }
 
   /**
@@ -177,15 +174,24 @@ export class PerspectiveManager {
     camera.position.set(x, y, z);
   }
 
-  public _follow(name: string | symbol, renderable: Renderable, lookAt?: (state: IRenderable) => IPosition | any) {
+  public _follow(name: string | symbol, renderable: Renderable, offset: IPosition, lookAt?: (state: IRenderable) => IPosition | any) {
     const camera = this.cameraMap.get(name);
     if (camera === undefined) return;
     const self = this;
+    // 目前比较 trick 的做法：用一个不可视替身，作为被追踪者的孩子，从而维护相对坐标
+    const obj = new Object3D();
+    obj.name = `followed_by_${camera.uuid}`;
+    obj.visible = false;
+    renderable.add(obj);
+    camera.userData['substitute'] = obj;
     renderable.watch(camera.uuid as string, (state: IRenderable, oldState: IRenderable) => {
-      const { x: oldX, y: oldY, z: oldZ } = oldState;
       const { x: newX, y: newY, z: newZ } = state;
-      const { x, y, z } = camera.position;
-      self._update(name, { x: x + newX - oldX, y: y + newY - oldY, z: z + newZ - oldZ });
+      const { x: sx, y: sy, z: sz  } = renderable.object.scale;
+      // 距离是世界坐标系下的，所以先还原缩放
+      obj.position.set(1 / sx * offset.x, 1 / sy * offset.y, 1 / sz * offset.z);
+      
+      const { x, y, z } = obj.getWorldPosition(new Vector3());
+      self._update(name, { x, y, z });
       if (lookAt === undefined) {
         camera.lookAt(newX, newY, newZ)
       } else {

@@ -5,6 +5,7 @@ import { ControlManager, IMoveState } from "./managers/ControlManager";
 import { ObjectManager } from "./managers/ObjectManager";
 import { PerspectiveManager } from "./managers/PerspectiveManager";
 import { SceneManager } from "./managers/SceneManager"
+import { Player } from "./Player";
 import { ProfileView, ProfileViewEvent } from "./views/ProfileView";
 import { TownView, TownViewEvent } from "./views/TownView";
 import { IManagers, IViewProps, View } from "./views/View";
@@ -23,6 +24,8 @@ export class Game {
   private option: IGameOption;
   private activeView: View | null = null;
   private managers: IManagers;
+  private playerMap: Map<string, Player> = new Map();
+  private localPlayer: LocalPlayer;
   private viewMap: Map<string, View> = new Map();
   
   private clock: Clock = new Clock();
@@ -56,6 +59,7 @@ export class Game {
         z: -150,
       }, 
       assetManager);
+    this.localPlayer = localPlayer;
 
     // init views
     const profileView = new ProfileView({ 
