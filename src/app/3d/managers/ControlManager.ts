@@ -56,7 +56,6 @@ export class ControlManager {
   private pointerLockControls: PointerLockControls | null = null;
   private destoryers: IDestroyer[] = [];
   private customDestoryers: IDestroyer[] = [];
-  private _lastDirection: Vector3 | null = null;
 
   constructor(options: IControlManagerOption) {
     this.options = Object.assign(defaultControlManagerOptions(), options);
@@ -130,6 +129,19 @@ export class ControlManager {
         || new Vector3();; 
   }
 
+  public lock() {
+    this._lock();
+    return this;
+  }
+
+  public unlock() {
+    this.pointerLockControls?.unlock();
+    return this;
+  }
+
+  private _lock() {
+    this.pointerLockControls?.lock();
+  }
 
   private bindEvents() {
     this.destoryers.push(this._on('keydown', this.onKeyDown.bind(this)));
@@ -226,7 +238,7 @@ export class ControlManager {
   }
 
   private onMouseDown(e: Event) {
-    this.pointerLockControls?.lock();
+    this.lock();
   }
 
   private onLock(e: Event) { }

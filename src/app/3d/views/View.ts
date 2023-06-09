@@ -247,6 +247,9 @@ export abstract class View {
     } else {
       this.camera = perspectiveManager.switch(perpective as string | symbol);
     }
+    if (this.controlManager.locked) {
+      this.controlManager.unlock().lock();
+    }
     this.controlManager.update({ camera: this.camera as PerspectiveCamera  });
   }
 
