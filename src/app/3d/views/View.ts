@@ -36,7 +36,6 @@ export interface IActions {
   POINTING: string,
   TALKING: string,
   POINTING_GESTURE: string,
-  DRIVING: string,
 }
 
 export const Actions: IActions = {
@@ -48,7 +47,6 @@ export const Actions: IActions = {
   POINTING: 'Pointing', 
   TALKING: 'Talking', 
   POINTING_GESTURE: 'Pointing Gesture',
-  DRIVING: 'Driving'
 };
 
 export interface IViewOption extends IManagers {
@@ -81,6 +79,7 @@ export abstract class View {
   protected animatables: Set<IAnimatable> = new Set();
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
   private eventMap = new Map<string | symbol | number, Set<(...args: any) => any>>();
+  private lastPerpectiveIndex: number | undefined;
 
   constructor(options: IViewOption) {
     const { 
@@ -138,7 +137,7 @@ export abstract class View {
    * 挂载，只在渲染前调用一次
    */
   public mount(props?: IViewProps) {
-    this.onSwitchPerspective();
+    this.onSwitchPerspective(this.lastPerpectiveIndex);
     if (this.localPlayer === null) {
       this.controlManager.update({ showJoyStick: false, controlPointer: false })
     } else {
@@ -245,15 +244,18 @@ export abstract class View {
   /**
    * 切换视角时发生
    */
-  protected onSwitchPerspective() {
+  protected onSwitchPerspective(index?: number) {
     const { perspectiveManager, perspectives } = this;
     if (perspectives.length === 0) return;
     const { active } = perspectiveManager;
-    let index = -1;
-    if (active !== null) {
-      index = perspectives.indexOf(active);
+    if (index ===  undefined) {
+      index = -1;
+      if (active !== null) {
+        index = perspectives.indexOf(active);
+      }
+      index = (index + 1) % perspectives.length;
     }
-    index = (index + 1) % perspectives.length;
+    this.lastPerpectiveIndex = index;
     const perpective = perspectives[index];
     
     if (typeof perpective === 'object') {

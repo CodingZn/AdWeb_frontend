@@ -1,6 +1,6 @@
-import { AnimationClip, AnimationMixer } from "three";
+import { AnimationAction, AnimationClip, AnimationMixer } from "three";
 import { IAnimatable, IAnimatableParams, IAnimatableState } from "./Animatable";
-import { IMoveable, IMoveableParams, IMoveableState, IMoveState, Moveable } from "./Moveable";
+import { IMoveable, IMoveableParams, IMoveableState, Moveable } from "./Moveable";
 
 export interface IAnimateMoveable extends IAnimatable, IMoveable {}
 
@@ -14,6 +14,9 @@ export abstract class AnimateMoveable extends Moveable implements IAnimatable, I
   protected _idle: AnimationClip | null = null;
   protected _action: string = '';
   protected _actionTime: number = 0;
+  private currentAction: AnimationAction | null = null;
+  private queueActionName: string | null = null;
+  private actionTimer: any | null = null;
 
   constructor(params: IAnimateMoveableParams) { 
     super(params);
@@ -27,20 +30,47 @@ export abstract class AnimateMoveable extends Moveable implements IAnimatable, I
 
   public set action(name: string){
 		if (this._action === name || this.mixer === null) return;
+    
+    if (this.actionTimer !== null) {
+      this.queueActionName = name;
+      return;
+    }
+    
     let anim = this.actionMap.get(name);
     
     if (anim === undefined && this.idle !== null) {
       anim = this.idle;
     };
+
     if (anim !== undefined) {
       this._action = name;
 		  this._actionTime = Date.now();
-      this.mixer.stopAllAction();
       const clip = anim; 
       const action = this.mixer.clipAction(clip);
 
-      // todo 抬手异常
-      // action.fadeIn(0.5);
+      if (this.currentAction === action) return;
+
+      // swap action
+      const self = this;
+      const previousAction = this.currentAction;
+      this.currentAction = action;
+
+      // cross fade to the new action
+      const crossFadeDurationInSecond = 0.3;
+
+      previousAction?.crossFadeTo(
+        action,
+        crossFadeDurationInSecond,
+        false
+      );
+
+      this.actionTimer = setTimeout(() => {
+        previousAction?.stop();
+        if (self.queueActionName !== null) {
+          self.action = self.queueActionName;
+        }
+        self.actionTimer = null;
+      }, crossFadeDurationInSecond * 1000);
       action.play();
     }
 	}

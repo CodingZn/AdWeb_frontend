@@ -106,8 +106,9 @@ export abstract class Character extends AnimateMoveable {
       .then((res) => {
         self.onLoad([res]);
         self.characterObject = res;
-        self.idle = res.animations[0];
         res.mixer = self.mixer = new AnimationMixer(res);
+        self.idle = res.animations[0];
+        self.action = '';
         self.action = action;
         return Promise.resolve(self.assetManager);
       })

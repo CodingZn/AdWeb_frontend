@@ -179,6 +179,8 @@ export class Renderable {
         if (texture !== undefined) {
           material.map = texture;
         }
+
+        
       }
     });
     return this;
@@ -199,7 +201,7 @@ export class Renderable {
       visible } = newState;
     this.object.position.set(x, y, z);
     this.object.quaternion.setFromEuler(new Euler(ex, ey, ez));
-    this.object.name = name;
+    this.object.name = this.name = name;
     this.object.visible = visible;
     this.object.traverse(child => {
       // todo 修改子
