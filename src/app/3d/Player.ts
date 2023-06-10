@@ -1,29 +1,38 @@
-import { assign } from "lodash";
-import { AnimationClip, AnimationMixer, AnimationUtils } from "three";
-import { AssetManager } from "./managers/AssetManager";
-import { Renderable, defaultRenderableParams, ITransformType } from "./utils/Renderable";
-import { ActionMap, Actions } from "./views/View";
+import { assign } from 'lodash';
+import {
+  AnimationAction,
+  AnimationClip,
+  AnimationMixer,
+  AnimationUtils,
+} from 'three';
+import { AssetManager } from './managers/AssetManager';
+import {
+  Renderable,
+  defaultRenderableParams,
+  ITransformType,
+} from './utils/Renderable';
+import { ActionMap, Actions } from './views/View';
 
 export interface IPlayerParams {
-  name?: string,
-  profileID?: number,
-  x?: number,
-  y?: number,
-  z?: number,
-  h?: number  // 朝向，弧度制
-  pb?: number  // 朝向，弧度制
-  action?: string,
+  name?: string;
+  profileID?: number;
+  x?: number;
+  y?: number;
+  z?: number;
+  h?: number; // 朝向，弧度制
+  pb?: number; // 朝向，弧度制
+  action?: string;
 }
 
 export interface IPlayerState extends IPlayerParams {
-  name: string,
-  profileID: number,
-  x: number,
-  y: number,
-  z: number,
-  h: number,
-  pb: number,
-  action: string,
+  name: string;
+  profileID: number;
+  x: number;
+  y: number;
+  z: number;
+  h: number;
+  pb: number;
+  action: string;
 }
 
 const defaultPlayerParams: () => IPlayerState = () => ({
@@ -31,21 +40,21 @@ const defaultPlayerParams: () => IPlayerState = () => ({
   h: 0,
   pb: 0,
   action: Actions.IDLE,
-  ...defaultRenderableParams()
-})
+  ...defaultRenderableParams(),
+});
 
 export const ProfileMap = [
-  'BeachBabe', 
-  'BusinessMan', 
-  'Doctor', 
-  'FireFighter', 
-  'Policeman', 
+  'BeachBabe',
+  'BusinessMan',
+  'Doctor',
+  'FireFighter',
+  'Policeman',
   'Prostitute',
-  'Punk', 
-  'RiotCop', 
-  'Robber', 
-  'Sheriff', 
-  'Waitress'
+  'Punk',
+  'RiotCop',
+  'Robber',
+  'Sheriff',
+  'Waitress',
 ];
 
 export class Player {
@@ -57,13 +66,21 @@ export class Player {
   private _actionTime: number = 0;
   private _profileID: number = -1;
 
+  private currentAction: AnimationAction | null = null;
+
   constructor(params: IPlayerParams, assetManager: AssetManager) {
     this.assetManager = assetManager;
     this.obj = this._update(defaultPlayerParams(), params).obj;
   }
 
   public get state(): IPlayerState {
-    const { name, x, y, z, euler: { x: pb, y: h } } = this.object.state;
+    const {
+      name,
+      x,
+      y,
+      z,
+      euler: { x: pb, y: h },
+    } = this.object.state;
     const { profileID, action } = this;
     return { name, profileID, x, y, z, h, pb, action };
   }
@@ -72,19 +89,29 @@ export class Player {
     return this.obj;
   }
 
-  public get name() { return this.state.name; }
-  
-  public get profileID() { return this._profileID; }
+  public get name() {
+    return this.state.name;
+  }
 
-  public get action(){ return this._action; }
+  public get profileID() {
+    return this._profileID;
+  }
+
+  public get action() {
+    return this._action;
+  }
 
   public update(params: IPlayerParams) {
     return this._update(this.state, params);
   }
 
-  public move(params: { x?: number, y?: number, z?: number }) {
+  public move(params: { x?: number; y?: number; z?: number }) {
     const { x, y, z } = params;
-    this.transform({ translateX: x || 0, translateY: y || 0, translateZ: z || 0 })
+    this.transform({
+      translateX: x || 0,
+      translateY: y || 0,
+      translateZ: z || 0,
+    });
   }
 
   public transform(params: ITransformType) {
@@ -92,32 +119,65 @@ export class Player {
     return this;
   }
 
-  private set action(name: string){
-		if (this._action == name || this.mixer === null) return;
+  private set action(name: string) {
+    if (this._action == name || this.mixer === null) return;
     let anim = ActionMap.get(name);
-    
+
     if (anim === undefined && this.idleAnim !== null) {
       anim = this.idleAnim;
-    };
+    }
+
+    if (this.currentAction == null) {
+      this.currentAction = this.mixer.clipAction(
+        ActionMap.get(Actions.WALKING) as unknown as AnimationClip
+      );
+    }
+
     if (anim !== undefined) {
       this._action = name;
-		  this._actionTime = Date.now();
-      this.mixer.stopAllAction();
-      const clip = anim; 
+      this._actionTime = Date.now();
+
+      // this.mixer.stopAllAction();
+      const clip = anim;
       const action = this.mixer.clipAction(clip);
 
-      // todo 抬手异常
-      // action.fadeIn(0.5);
+      if (this.currentAction == action) return;
+
+      // TODO: 抬手异常 [DONE]
+      // swap action
+      const previousAction = this.currentAction;
+      this.currentAction = action;
+
+      // cross fade to the new action
+      const crossFadeDurationInSecond = 0.5;
+
+      previousAction.crossFadeTo(
+        this.currentAction,
+        crossFadeDurationInSecond,
+        false
+      );
+
+      setTimeout(() => {
+        previousAction.stop();
+      }, crossFadeDurationInSecond * 1000);
+
       action.play();
     }
-	}
+  }
 
-  public act(dt: number) { this.mixer && this.mixer.update(dt); }
+  public act(dt: number) {
+    this.mixer && this.mixer.update(dt);
+  }
 
-  public get actionDuration() { return Date.now() - this._actionTime; }
+  public get actionDuration() {
+    return Date.now() - this._actionTime;
+  }
 
   private _update(oldParams: IPlayerState, params: IPlayerParams) {
-    const { name, profileID, x, y, z, h, pb, action } = assign(oldParams, params);
+    const { name, profileID, x, y, z, h, pb, action } = assign(
+      oldParams,
+      params
+    );
     if (this._profileID !== profileID) {
       this._profileID = profileID;
       // 需要重新加载模型
@@ -130,16 +190,19 @@ export class Player {
       this.obj = obj;
 
       const self = this;
-      this.assetManager.get(`fbx/people/${profileName}.fbx`, { forceUpdate: true })
-      .then((res) => {
-        obj.onLoad([res]);
-        self.idleAnim = res.animations[0];
-        res.mixer = self.mixer = new AnimationMixer(res);
-        self.action = action;
-        return Promise.resolve(self.assetManager);
-      })
-      .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))
-      .then((res) => obj.onLoad([res]));
+      this.assetManager
+        .get(`fbx/people/${profileName}.fbx`, { forceUpdate: true })
+        .then((res) => {
+          obj.onLoad([res]);
+          self.idleAnim = res.animations[0];
+          res.mixer = self.mixer = new AnimationMixer(res);
+          self.action = action;
+          return Promise.resolve(self.assetManager);
+        })
+        .then((assetManager) =>
+          assetManager.get(`images/SimplePeople_${profileName}_Brown.png`)
+        )
+        .then((res) => obj.onLoad([res]));
     } else {
       this.action = action;
     }

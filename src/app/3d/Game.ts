@@ -87,7 +87,7 @@ export class Game {
 
     const self = this;
     
-    this.switch(townView.name);
+    this.switch(profileView.name);
 
     this.render();
   }
