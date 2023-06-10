@@ -1,7 +1,8 @@
 import { assign, keys, random } from "lodash";
 import { AssetManager } from "../managers/AssetManager";
-import { Player, ProfileMap } from "../Player";
+import { Player } from "../characters/Player";
 import { Actions, IActions, IViewOption, IViewProps, PerspectiveType, View } from "./View"
+import { ProfileMap } from "../characters/Character";
 
 export interface IProfileViewOption extends IViewOption {
   assetManager: AssetManager
@@ -40,7 +41,7 @@ export class ProfileView extends View {
         profileID: k,
         x: k * DELTA,
       }, this.assetManager);
-      profile.object.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
+      profile.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
       this.profiles.push(profile);
     });
   }
@@ -64,9 +65,9 @@ export class ProfileView extends View {
       profiles, 
       camera, 
     } = this
-    
+    const self = this;
     profiles.forEach(profile => {
-      sceneManager.add(profile.object);
+      self.add(profile);
       if (profile.actionDuration > 2000) {
         if (profile.action === Actions.IDLE) {
           const actions = keys(Actions);
@@ -75,8 +76,8 @@ export class ProfileView extends View {
           profile.update({ action: Actions.IDLE });
         }
       }
-      profile.act(dt);
-      profile.object.transform({ rotateY: dt })
+      profile.animate(dt);
+      profile.transform({ rotateY: dt })
     });
     
     sceneManager.render(camera);

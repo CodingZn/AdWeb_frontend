@@ -1,14 +1,14 @@
 import { Clock } from "three";
-import { LocalPlayer } from "./LocalPlayer";
 import { AssetManager } from "./managers/AssetManager";
-import { ControlManager, IMoveState } from "./managers/ControlManager";
+import { ControlManager } from "./managers/ControlManager";
 import { ObjectManager } from "./managers/ObjectManager";
 import { PerspectiveManager } from "./managers/PerspectiveManager";
 import { SceneManager } from "./managers/SceneManager"
-import { Player } from "./Player";
+import { Player } from "./characters/Player";
 import { ProfileView, ProfileViewEvent } from "./views/ProfileView";
 import { TownView, TownViewEvent } from "./views/TownView";
 import { IManagers, IViewProps, View } from "./views/View";
+import { LocalPlayer } from "./characters/LocalPlayer";
 
 interface IGameOption {
   container?: HTMLElement

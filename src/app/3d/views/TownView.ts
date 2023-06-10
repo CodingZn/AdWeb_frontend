@@ -47,7 +47,7 @@ export class TownView extends View {
       this.scene.background = this.background;
     }
     
-    this.sceneManager.add(this.town, (child) => {
+    this.add(this.town, (child) => {
       const mesh = child as Mesh;
       if (mesh.isMesh && mesh.name.startsWith("proxy")) {
         (mesh.material as MeshBasicMaterial).visible = false;
@@ -57,7 +57,7 @@ export class TownView extends View {
     });
     
     if (this.localPlayer !== null) {
-      this.sceneManager.add(this.localPlayer.object);
+      this.add(this.localPlayer);
     }
 
     this.move(dt);

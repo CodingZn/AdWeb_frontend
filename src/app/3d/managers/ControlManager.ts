@@ -1,11 +1,8 @@
 import { JoyStick } from "../lib/JoyStick";
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import { Camera, Vector3 } from "three";
-export interface IMoveState {
-  forward: number,
-  right: number,
-  up: number,
-}
+import { IMoveState } from "../utils/Moveable";
+
 
 export interface IControlManagerOption {
   container?: HTMLElement,

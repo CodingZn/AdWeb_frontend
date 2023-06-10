@@ -38,7 +38,7 @@ export interface ITransformType {
   translateZ?: number,
 }
 
-export interface IRenderable extends IRenderableParams, IPosition {
+export interface IRenderableState extends IRenderableParams, IPosition {
   name: string,
   visible: boolean,
   x: number, 
@@ -47,7 +47,7 @@ export interface IRenderable extends IRenderableParams, IPosition {
   euler: IEuler
 }
 
-export const defaultRenderableParams: () => IRenderable = () => ({
+export const defaultRenderableParams: () => IRenderableState = () => ({
   name: '',
   x: 0,
   y: 0,
@@ -64,7 +64,7 @@ export const defaultRenderableParams: () => IRenderable = () => ({
 export class Renderable {
   public object: Object3D;
   private name: string = '';
-  private watchers: Map<string | number | symbol, (newState: IRenderable, oldState: IRenderable) => any> = new Map();
+  private watchers: Map<string | number | symbol, (newState: IRenderableState, oldState: IRenderableState) => any> = new Map();
 
   constructor(params?: IRenderableParams) {
     this.object = new Group();
@@ -73,7 +73,7 @@ export class Renderable {
     }
   }
 
-  public get state(): IRenderable {
+  public get state(): IRenderableState {
     const { 
       position: { x, y, z }, 
       rotation: { x: ex, y: ey, z: ez }, 
@@ -142,7 +142,7 @@ export class Renderable {
    * @param name 
    * @param cb 
    */
-  public watch(name: string | number | symbol, cb: (newState: IRenderable, oldState: IRenderable) => any) {
+  public watch(name: string | number | symbol, cb: (newState: IRenderableState, oldState: IRenderableState) => any) {
     this.watchers.set(name, cb);
   }
 
@@ -189,8 +189,8 @@ export class Renderable {
     this.object.clear();
   }
 
-  protected _update(oldState: IRenderable, state: IRenderableParams) {
-    const newState = { ...oldState, ...state } as IRenderable;
+  private _update(oldState: IRenderableState, state: IRenderableParams) {
+    const newState = { ...oldState, ...state } as IRenderableState;
     const { 
       name, 
       x, y, z, 
@@ -209,7 +209,7 @@ export class Renderable {
     return this;
   }
 
-  private notify(oldState: IRenderable) {
+  private notify(oldState: IRenderableState) {
     this.watchers.forEach(cb => cb(this.state, oldState));
   }
 }

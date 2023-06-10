@@ -1,12 +1,15 @@
 import { assign, keys } from "lodash";
-import { AnimationClip, Camera, PerspectiveCamera, Scene, Vector3 } from "three";
-import { LocalPlayer } from "../LocalPlayer";
+import { AnimationClip, Camera, Object3D, PerspectiveCamera, Scene, Vector3 } from "three";
+import { LocalPlayer } from "../characters/LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
-import { ControlManager, IDestroyer, IMoveState } from "../managers/ControlManager";
+import { ControlManager, IDestroyer } from "../managers/ControlManager";
 import { ObjectManager } from "../managers/ObjectManager";
 import { ICameraParams, PerspectiveManager } from "../managers/PerspectiveManager";
 import { SceneManager } from "../managers/SceneManager";
-import { IRenderable } from "../utils/Renderable";
+import { sgn } from "../../utils/function";
+import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
+import { IRenderableState, Renderable } from "../utils/Renderable";
+import { Animatable, IAnimatable } from "../utils/Animatable";
 
 export interface IManagers {
   sceneManager: SceneManager,
@@ -62,11 +65,6 @@ const defaultViewOption = () => ({
   perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
 })
 
-const sgn = (v: number) => v === 0 ? 0 
-                                   : v > 0 
-                                     ? 1 
-                                     : -1;
-
 export const ActionMap = new Map<string, AnimationClip>();
 
 export abstract class View {
@@ -76,10 +74,11 @@ export abstract class View {
   protected perspectiveManager: PerspectiveManager;
   protected controlManager: ControlManager;
   protected assetManager: AssetManager;
-  protected moveState: IMoveState = { forward: 0, right: 0, up: 0 };
   protected scene: Scene | null = null;
   protected camera: Camera | null = null;
   protected localPlayer: LocalPlayer | null;
+  protected movables: Set<IMoveable> = new Set();
+  protected animatables: Set<IAnimatable> = new Set();
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
   private eventMap = new Map<string | symbol | number, Set<(...args: any) => any>>();
 
@@ -103,7 +102,7 @@ export abstract class View {
     this.perspectives = perspectives;
     this._name = name;
     // 初始化机位
-    const lockedLookAtHandler = (state: IRenderable) => {
+    const lockedLookAtHandler = (state: IRenderableState) => {
       if (controlManager.locked) {
         return {}
       }
@@ -111,15 +110,15 @@ export abstract class View {
     }
     this.perspectiveManager.get(PerspectiveType.FIRST, {
       x: 0, y: 25, z: 0, 
-      parent: localPlayer?.object,
+      parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
       x: 0, y: 45, z: -55, 
-      parent: localPlayer?.object, 
+      parent: localPlayer, 
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
       x: 0, y: 45, z: 55, 
-      parent: localPlayer?.object,
+      parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     // 初始化动画
     const self = this;
@@ -209,6 +208,21 @@ export abstract class View {
   }
 
   /**
+   * 向场景中添加物体
+   * @param renderable 
+   * @param isCollider 
+   */
+  protected add(renderable: Renderable, isCollider?: (object: Object3D) => Boolean) {
+    if ((renderable as Moveable).move) {
+      this.movables.add(renderable as Moveable);
+    } 
+    if ((renderable as Animatable).animate) {
+      this.animatables.add((renderable as Animatable));
+    }
+    this.sceneManager.add(renderable, isCollider);
+  }
+
+  /**
    * 触发绑定的事件
    * @param eventName 
    * @param args 
@@ -225,7 +239,7 @@ export abstract class View {
    * @param state
    */
   protected onMove(state: IMoveState) {
-    this.moveState = state;
+    this.movables.forEach(v => v.onMove(state));
   }
 
   /**
@@ -263,15 +277,15 @@ export abstract class View {
     const { active } = this.perspectiveManager
     if (active === PerspectiveType.FIRST) {
       // 第一人称隐去角色
-      this.localPlayer.object.update({ visible: false })
+      this.localPlayer.update({ visible: false })
     } else {
-      this.localPlayer.object.update({ visible: true })
+      this.localPlayer.update({ visible: true })
     }
 
     // lock 状态下，玩家角度由相机更新
     if (this.controlManager.locked) {
       const { direction } = this.controlManager;
-      const { direction: playerDir } = this.localPlayer.object;
+      const { direction: playerDir } = this.localPlayer;
       // 只有 xz 平面上的转动
       direction.setY(0).normalize();
       playerDir.setY(0).normalize();
@@ -282,43 +296,8 @@ export abstract class View {
 				this.localPlayer.transform({ rotateY: rad })
 			}
     }
-
-    const { forward, right, up } = this.moveState;
-
-    let speed = 20;
-    // 动作
-    let action = Actions.IDLE;
-    if (forward !== 0 || right !== 0) {
-      if (this.localPlayer.action === Actions.RUNNING ||
-        (this.localPlayer.action === Actions.WALKING && this.localPlayer.actionDuration > 2000)) {
-        speed = 50;
-        action = Actions.RUNNING;
-      } else {
-        action = Actions.WALKING;
-      }
-    }
-    this.localPlayer.update({ action });
-    this.localPlayer.act(dt);
-    const object = this.localPlayer.object.object;
-    const quaternion = object.quaternion.clone();
-    if (forward !== 0) {
-      let z = forward * speed * dt;
-      const dir = new Vector3(0, 0, z).applyQuaternion(quaternion);
-      const intersect = this.sceneManager.collide(object, dir, 20)
-      if (intersect !== null) {
-        z = -sgn(z) *  (20 - intersect.distance);
-      }
-      this.localPlayer.move({ z });
-    }
-    if (right !== 0) {
-      let x = - right * speed * dt;
-      const dir = new Vector3(x, 0, 0).applyQuaternion(quaternion);
-      const intersect = this.sceneManager.collide(object, dir, 20)
-      if (intersect !== null) {
-        x = -sgn(x) *  (20 - intersect.distance);
-      }
-      this.localPlayer.move({ x });
-    }
     
+    this.movables.forEach(v => v.move(dt, this.sceneManager.colliders));    
+    this.animatables.forEach(v => v.animate(dt));    
   }
 }

@@ -72,6 +72,11 @@ export class SceneManager {
     this.onResize();
   }
 
+  public get colliders() { 
+    if (this.activeName === null) return new Set<Object3D>();
+    return (this.stateMap.get(this.activeName) as ISceneState).colliders;
+  }
+
   /**
    * 
    * @param name 唯一的场景名称。若不存在则创建一个场景

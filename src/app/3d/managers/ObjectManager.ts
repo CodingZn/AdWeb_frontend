@@ -1,5 +1,5 @@
 import { AssetManager } from "./AssetManager";
-import { IRenderable, IRenderableParams, Renderable } from "../utils/Renderable";
+import { IRenderableState, IRenderableParams, Renderable } from "../utils/Renderable";
 
 export interface IObjectParams extends IRenderableParams {
   url?: string | string[],
@@ -34,7 +34,7 @@ export class ObjectManager {
       }
     }
     // todo 改造成不同类型
-    let newRenderable = new Renderable(Object.assign(params as IRenderableParams, { name } as IRenderable));
+    let newRenderable = new Renderable(Object.assign(params as IRenderableParams, { name } as IRenderableState));
     // 加载物体模型，加载完成后回调 onLoad
     if (params?.url) {
       const url = params.url as string | string[];

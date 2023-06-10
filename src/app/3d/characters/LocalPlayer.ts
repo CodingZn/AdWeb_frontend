@@ -1,4 +1,5 @@
-import { AssetManager } from "./managers/AssetManager";
+
+import { AssetManager } from "../managers/AssetManager";
 import { IPlayerParams, Player } from "./Player";
 
 export interface ILocalPlayerParams extends IPlayerParams {}

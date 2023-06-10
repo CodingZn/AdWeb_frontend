@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash";
 import { Object3D, PerspectiveCamera, Vector3 } from "three";
-import { IPosition, IRenderable, Renderable } from "../utils/Renderable";
+import { IPosition, IRenderableState, Renderable } from "../utils/Renderable";
 
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,
@@ -14,7 +14,7 @@ export interface ICameraParams {
   y?: number,
   z?: number,
   parent?: Renderable,
-  lookAt?: (state: IRenderable) => IPosition | any
+  lookAt?: (state: IRenderableState) => IPosition | any
 }
 
 interface IState extends ICameraParams {
@@ -107,7 +107,7 @@ export class PerspectiveManager {
    * @param lookAt 可指定获取焦点的方式
    * @returns 
    */
-  public follow(renderable: Renderable, lookAt?: (state: IRenderable) => IPosition) {
+  public follow(renderable: Renderable, lookAt?: (state: IRenderableState) => IPosition) {
     if (this.activeName === null) {
       console.warn('No active camera to follow!');
       return;
@@ -174,7 +174,7 @@ export class PerspectiveManager {
     camera.position.set(x, y, z);
   }
 
-  public _follow(name: string | symbol, renderable: Renderable, offset: IPosition, lookAt?: (state: IRenderable) => IPosition | any) {
+  public _follow(name: string | symbol, renderable: Renderable, offset: IPosition, lookAt?: (state: IRenderableState) => IPosition | any) {
     const camera = this.cameraMap.get(name);
     if (camera === undefined) return;
     const self = this;
@@ -184,7 +184,7 @@ export class PerspectiveManager {
     obj.visible = false;
     renderable.add(obj);
     camera.userData['substitute'] = obj;
-    renderable.watch(camera.uuid as string, (state: IRenderable, oldState: IRenderable) => {
+    renderable.watch(camera.uuid as string, (state: IRenderableState, oldState: IRenderableState) => {
       const { x: newX, y: newY, z: newZ } = state;
       const { x: sx, y: sy, z: sz  } = renderable.object.scale;
       // 距离是世界坐标系下的，所以先还原缩放
