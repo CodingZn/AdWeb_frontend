@@ -1,5 +1,5 @@
 import { assign, keys } from "lodash";
-import { AnimationClip, Camera, Object3D, PerspectiveCamera, Scene, Vector3 } from "three";
+import { AnimationClip, Camera, PerspectiveCamera, Scene, Vector3 } from "three";
 import { LocalPlayer } from "../characters/LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
 import { ControlManager, IDestroyer } from "../managers/ControlManager";
@@ -110,15 +110,15 @@ export abstract class View {
     this.perspectiveManager.get(PerspectiveType.FIRST, {
       x: 0, y: EYE_HEIGHT, z: 0, 
       parent: localPlayer,
-      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || new Vector3(state.x, EYE_HEIGHT, state.z).addScaledVector(localPlayer!.direction as Vector3, 100)) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
       x: 0, y: CHARACTER_HEIGHT * 1.8, z: -550, 
       parent: localPlayer, 
-      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: CHARACTER_HEIGHT, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
       x: 0, y: CHARACTER_HEIGHT * 1.8, z: 550, 
       parent: localPlayer,
-      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
+      lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: CHARACTER_HEIGHT, z: state.z }) })
     // 初始化动画
     const self = this;
     keys(Actions).forEach(key => {
@@ -211,7 +211,7 @@ export abstract class View {
    * @param renderable 
    * @param isCollider 
    */
-  protected add(renderable: Renderable, isCollider?: (object: Object3D) => Boolean) {
+  protected add(renderable: Renderable) {
     if ((renderable as Moveable).move) {
       this.movables.add(renderable as Moveable);
     } 
@@ -292,6 +292,6 @@ export abstract class View {
     }
     
     this.movables.forEach(v => v.move(dt, this.sceneManager.renderables));    
-    this.animatables.forEach(v => v.animate(dt));    
+    this.animatables.forEach(v => v.animate(dt));
   }
 }

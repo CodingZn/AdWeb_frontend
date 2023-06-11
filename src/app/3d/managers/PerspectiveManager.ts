@@ -1,6 +1,7 @@
 import { cloneDeep } from "lodash";
 import { Object3D, PerspectiveCamera, Vector3 } from "three";
 import { IPosition, IRenderableState, Renderable } from "../utils/Renderable";
+import { PerspectiveType } from "../views/View";
 
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,

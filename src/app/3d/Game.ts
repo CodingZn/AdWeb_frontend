@@ -9,9 +9,12 @@ import { ProfileView, ProfileViewEvent } from "./views/ProfileView";
 import { TownView, TownViewEvent } from "./views/TownView";
 import { IManagers, IViewProps, View } from "./views/View";
 import { LocalPlayer } from "./characters/LocalPlayer";
+import { assign } from "lodash";
+import { SocketService } from "./socket/socket.service";
 
 interface IGameOption {
-  container?: HTMLElement
+  container?: HTMLElement,
+  socketService?: SocketService,
 }
 
 
@@ -31,7 +34,7 @@ export class Game {
   private clock: Clock = new Clock();
   
   constructor(option: IGameOption) {
-    this.option = Object.assign(defaultOption(), option);
+    this.option = assign(defaultOption(), option);
     const container = this.option.container as HTMLElement;
 
     // init managers

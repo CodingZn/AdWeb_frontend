@@ -55,7 +55,6 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
   x: 0,
   y: 0,
   z: 0,
-  color: 0xffffff,
   visible: true,
   euler: {
     x: 0,
@@ -77,6 +76,8 @@ export class Renderable {
       this._update(defaultRenderableParams(), params);
     }
   }
+
+  public get uuid() { return this.object.uuid; }
 
   public get name() { return this._name; }
 
@@ -101,6 +102,7 @@ export class Renderable {
     const colliders = new Set<Object3D>();
     this.object.traverse(child => {
       if (
+        (child as Mesh).isMesh &&
         isCollider === true || 
         (isFunction(isCollider) && isCollider(child))
       ) { 
@@ -145,6 +147,15 @@ export class Renderable {
       this.object.add(renderable.object);
     } else {
       this.object.add(renderable as Object3D);
+    }
+    return this;
+  }
+
+  public remove(renderable: Renderable | Object3D) {
+    if (renderable instanceof Renderable) {
+      this.object.remove(renderable.object);
+    } else {
+      this.object.remove(renderable as Object3D);
     }
     return this;
   }
@@ -253,7 +264,6 @@ export class Renderable {
       name, 
       x, y, z, 
       euler: { x: ex, y: ey, z: ez }, 
-      color, 
       isCollider,
       visible } = newState;
     this.object.position.set(x, y, z);

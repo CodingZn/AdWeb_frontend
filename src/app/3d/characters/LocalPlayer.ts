@@ -11,7 +11,7 @@ export interface ILocalPlayerParams extends IPlayerParams {}
 
 export class LocalPlayer extends Player {
   private aim: Renderable;
-  private _direction: IPosition = { x: 0, y: 0, z: 0 };
+  private _direction: IPosition | null = null;
   private targets: Renderable[] = [];
 
   constructor(params: ILocalPlayerParams, assetManager: AssetManager) {
@@ -24,7 +24,9 @@ export class LocalPlayer extends Player {
    * 这里是包含了俯仰角度的
    * @memberof LocalPlayer
    */
-  public override get direction() { return this._direction };
+  public override get direction() {
+    return this._direction || super.direction;
+  };
   public override set direction(v) {
     const dir = super.direction
     const direction = new Vector3(dir.x, dir.y, dir.z);

@@ -44,7 +44,8 @@ export class Moveable extends Renderable implements IMoveable {
       return { 
         distance,
         object: map.get(object.uuid)!,
-        target: object
+        target: object,
+        colliders
        };
 		} else {
       return null;
@@ -52,11 +53,11 @@ export class Moveable extends Renderable implements IMoveable {
   }
 
   public collide(colliders?: Iterable<Renderable>, dir?: { x?: number, y?: number, z?: number }, distance?: number) {
-    const { name, object } = this;
+    const { uuid, object } = this;
     const pos = new Vector3();
     object.getWorldPosition(pos);
     // 防止将自身当作障碍
-    const filteredColliders = Array.from(colliders || []).filter(v => v.name !== name);
+    const filteredColliders = Array.from(colliders || []).filter(v => v.uuid !== uuid);
     if (dir !== undefined) {
       return Moveable.collide(pos, dir, filteredColliders, distance);
     } else {
@@ -93,6 +94,15 @@ export class Moveable extends Renderable implements IMoveable {
       }
     }
     this.transform({ translateX: x, translateY: y, translateZ: z });
+    // down
+    const intersect = this.collide(renderables, new Vector3(0, -1, 0), Infinity);
+    if (intersect !== null) {
+      const { y: curY } = this.state;
+      let targetY = curY - intersect.distance;
+      const newY = 0.8 * curY + 0.2 * targetY;
+      y = newY - curY;
+      this.update({ y: newY });
+    }
     return { x, y, z };
   }
 }

@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
 import * as THREE from 'three';
 import { Game } from '../Game';
+import { SocketService } from '../socket/socket.service';
 
 // for debug
 window.THREE = THREE;
@@ -13,10 +14,10 @@ window.THREE = THREE;
 })
 export class TestComponent {
   private game: Game;
-  constructor(private ref: ElementRef) {
+  constructor(private socketService: SocketService) {
     const container = document.body;
 
-    const game = new Game({ container });
+    const game = new Game({ container, socketService });
     (window as any).game = game; 
     this.game = game;
   }
