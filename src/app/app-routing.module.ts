@@ -5,6 +5,7 @@ import {HomeComponent} from "./home/home.component";
 import {AppComponent} from "./app.component";
 import {UserinfoComponent} from "./userinfo/userinfo.component";
 import {UserProfileComponent} from "./user-profile/user-profile.component";
+import {SocketTestComponent} from "./3d/socket/socket-test/socket-test.component";
 
 
 const routes: Routes = [

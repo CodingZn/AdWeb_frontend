@@ -17,6 +17,8 @@ import {MatInputModule} from "@angular/material/input";
 import {ReactiveFormsModule} from "@angular/forms";
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import {RouterModule} from '@angular/router';
+import { SocketTestComponent } from './3d/socket/socket-test/socket-test.component';
+import {SocketService} from "./3d/socket/socket.service";
 
 @NgModule({
   declarations: [
@@ -25,6 +27,7 @@ import {RouterModule} from '@angular/router';
     HomeComponent,
     UserinfoComponent,
     UserProfileComponent,
+    SocketTestComponent,
   ],
     imports: [
         BrowserModule,
@@ -41,7 +44,7 @@ import {RouterModule} from '@angular/router';
         ReactiveFormsModule,
         RouterModule,
     ],
-  providers: [],
+  providers: [SocketService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
