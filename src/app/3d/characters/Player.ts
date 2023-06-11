@@ -2,7 +2,9 @@
 import { AssetManager } from "../managers/AssetManager";
 import { Character, ICharacterParams } from "./Character";
 
-export interface IPlayerParams extends ICharacterParams {}
+export interface IPlayerParams extends ICharacterParams {
+  showName?: boolean
+}
 
 export interface IPlayerState extends IPlayerParams {
   name: string,
@@ -18,5 +20,12 @@ export interface IPlayerState extends IPlayerParams {
 export class Player extends Character {
   constructor(params: IPlayerParams, assetManager: AssetManager) {
     super(params, assetManager);
+  }
+
+  public override update(params: IPlayerParams) {
+    if (params.showName !== undefined) {
+      this.nameText.update({ visible: params.showName })
+    }
+    return super.update(params);
   }
 }

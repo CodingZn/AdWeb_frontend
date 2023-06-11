@@ -1,5 +1,7 @@
-import { assign } from "lodash";
+import { assign, random } from "lodash";
 import { CubeTexture, Mesh, MeshBasicMaterial } from "three";
+import { ProfileMap } from "../characters/Character";
+import { NPC } from "../characters/NPC";
 import { Renderable } from "../utils/Renderable";
 import { IViewOption, PerspectiveType, View } from "./View"
 
@@ -12,12 +14,13 @@ export enum TownViewEvent {
 export class TownView extends View {
   private town: Renderable;
   private background: CubeTexture | null = null;
+  private npcs: NPC[] = [];
   constructor(option: ITownViewOption) {
     super(assign(option, {
       perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
     }));
     const self = this;
-    this.town = new Renderable().transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1 });
+    this.town = new Renderable()
     this.assetManager.get('fbx/town.fbx')
     .then(res => {
       self.town.onLoad([res]);
@@ -33,7 +36,17 @@ export class TownView extends View {
       self.background = res as CubeTexture;
     });
 
-    this.localPlayer?.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1 })
+    // 人物
+    for (let i = 0; i < 50; i++) {
+      const npc = new NPC({
+        name: `NPC_${i}`,
+        profileID: i % ProfileMap.length,
+        x: random(-10000, 10000),
+        z: random(-10000, 10000),
+      }, this.assetManager)
+      .transform({ rotateY: random(-Math.PI, Math.PI, true) });
+      this.npcs.push(npc);
+    }
   }
 
   public mounted() {
@@ -56,12 +69,15 @@ export class TownView extends View {
       return false;
     });
     
+    const self = this;
     if (this.localPlayer !== null) {
-      this.add(this.localPlayer);
+      this.add(this.localPlayer, () => true);
     }
 
-    this.move(dt);
+    this.npcs.forEach(npc => self.add(npc, () => true));
 
+    this.move(dt);
+    
     this.sceneManager.render(this.camera);
   }
 

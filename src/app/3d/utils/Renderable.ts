@@ -1,3 +1,4 @@
+import { isFunction } from "lodash";
 import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial, Euler } from "three";
 
 export interface IPosition { 
@@ -17,7 +18,7 @@ export interface IRenderableParams {
   y?: number, 
   z?: number,
   name?: string,
-  color?: string,
+  color?: number, // hex number
   visible?: boolean,
   euler?: {
     x?: number, 
@@ -52,7 +53,7 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
   x: 0,
   y: 0,
   z: 0,
-  color: '#ffffff',
+  color: 0xffffff,
   visible: true,
   euler: {
     x: 0,
@@ -63,7 +64,7 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
 
 export class Renderable {
   public object: Object3D;
-  private name: string = '';
+  private _name: string = '';
   private watchers: Map<string | number | symbol, (newState: IRenderableState, oldState: IRenderableState) => any> = new Map();
 
   constructor(params?: IRenderableParams) {
@@ -72,6 +73,10 @@ export class Renderable {
       this._update(defaultRenderableParams(), params);
     }
   }
+
+  public get name() { return this._name; }
+
+  public set name(v) { this._name = v; this.object.traverse(child => { child.name = v; }) }
 
   public get state(): IRenderableState {
     const { 
@@ -134,7 +139,6 @@ export class Renderable {
     renderable.watchers.forEach((value, key) => {
       watchers.set(key, value);
     })
-    
   }
 
   /**
@@ -152,6 +156,42 @@ export class Renderable {
    */
   public unwatch(name: string | number | symbol) {
     this.watchers.delete(name);
+  }
+
+  public follow(
+    renderable: Renderable, 
+    offset?: { x?: number, y?: number, z?: number} | ((state: IRenderableState) => IPosition), 
+    lookAt?: (state: IRenderableState) => IPosition | any) {
+    // 目前比较 trick 的做法：用一个不可视替身，作为被追踪者的孩子，从而维护相对坐标
+    const { object } = this;
+    const obj = new Object3D();
+    obj.name = `substitute_for_${object.uuid}`;
+    obj.visible = false;
+    renderable.add(obj);
+    object.userData['substitute'] = obj;
+    const self = this;
+    renderable.watch(object.uuid as string, (state: IRenderableState, oldState: IRenderableState) => {
+      const { x: newX, y: newY, z: newZ } = state;
+      const { x: sx, y: sy, z: sz  } = renderable.object.scale;
+      if (isFunction(offset)) {
+        const pos = offset(state);
+        obj.position.set(pos.x, pos.y, pos.z);
+      } else {
+        // 距离是世界坐标系下的，所以先还原缩放
+        obj.position.set(1 / sx * (offset?.x || 0), 1 / sy * (offset?.y || 0), 1 / sz * (offset?.z || 0));
+      }
+      renderable.parent?.add(object);
+      const { x, y, z } = obj.getWorldPosition(new Vector3());
+      self.update({ x, y, z });
+      if (lookAt === undefined) {
+        object.lookAt(newX, newY, newZ)
+      } else {
+        const { x, y, z } = lookAt(state);
+        if (x !== undefined && y !== undefined && z !== undefined) {
+          object.lookAt(x, y, z);
+        }
+      }
+    })
   }
 
   public onLoad(resources: any[]) {
@@ -201,12 +241,9 @@ export class Renderable {
       visible } = newState;
     this.object.position.set(x, y, z);
     this.object.quaternion.setFromEuler(new Euler(ex, ey, ez));
-    this.object.name = this.name = name;
+    this.name = name;
     this.object.visible = visible;
-    this.object.traverse(child => {
-      // todo 修改子
-
-    })
+    
     this.notify(oldState);
     return this;
   }

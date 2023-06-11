@@ -10,6 +10,8 @@ import { sgn } from "../../utils/function";
 import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
 import { IRenderableState, Renderable } from "../utils/Renderable";
 import { Animatable, IAnimatable } from "../utils/Animatable";
+import { Text } from "../utils/Text";
+import { CHARACTER_HEIGHT } from "../characters/Character";
 
 export interface IManagers {
   sceneManager: SceneManager,
@@ -80,6 +82,7 @@ export abstract class View {
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
   private eventMap = new Map<string | symbol | number, Set<(...args: any) => any>>();
   private lastPerpectiveIndex: number | undefined;
+  private aim: Renderable;
 
   constructor(options: IViewOption) {
     const { 
@@ -108,15 +111,15 @@ export abstract class View {
       return null;
     }
     this.perspectiveManager.get(PerspectiveType.FIRST, {
-      x: 0, y: 25, z: 0, 
+      x: 0, y: CHARACTER_HEIGHT * 0.8, z: 0, 
       parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
-      x: 0, y: 45, z: -55, 
+      x: 0, y: CHARACTER_HEIGHT * 1.8, z: -550, 
       parent: localPlayer, 
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     this.perspectiveManager.get(PerspectiveType.FRONT, { 
-      x: 0, y: 45, z: 55, 
+      x: 0, y: CHARACTER_HEIGHT * 1.8, z: 550, 
       parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 15, z: state.z }) })
     // 初始化动画
@@ -126,7 +129,9 @@ export abstract class View {
       anim !== Actions.IDLE && assetManager.get(`fbx/anims/${anim}.fbx`).then(res => {
         ActionMap.set(anim, res.animations[0])
       }) 
-    })    
+    }) 
+    // 准星
+    this.aim = new Text({ content: '+', color: 0x0000ff, size: 5, height: 5 }, assetManager);
   }
 
   public get name() { return this._name; }
@@ -150,6 +155,7 @@ export abstract class View {
     )
     this.scene = this.sceneManager.switch(this.name);
     this.scene.add(this.camera as Camera);
+    this.camera?.add(this.aim.object);
     this.mounted(props);
     return this;
   }
@@ -238,7 +244,7 @@ export abstract class View {
    * @param state
    */
   protected onMove(state: IMoveState) {
-    this.movables.forEach(v => v.onMove(state));
+    this.localPlayer?.onMove(state);
   }
 
   /**

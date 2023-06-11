@@ -2,13 +2,13 @@ import { assign, keys, random } from "lodash";
 import { AssetManager } from "../managers/AssetManager";
 import { Player } from "../characters/Player";
 import { Actions, IActions, IViewOption, IViewProps, PerspectiveType, View } from "./View"
-import { ProfileMap } from "../characters/Character";
+import { CHARACTER_HEIGHT, ProfileMap } from "../characters/Character";
 
 export interface IProfileViewOption extends IViewOption {
   assetManager: AssetManager
 }
 
-const DELTA = 50;
+const DELTA = 500;
 
 export interface IProfileViewProps extends IViewProps {
   profileID: number
@@ -28,9 +28,9 @@ export class ProfileView extends View {
         type: PerspectiveType.FIXED,
         params: {
           x: 0,
-          y: 10,
-          z: 50,
-          targetY: 15
+          y: CHARACTER_HEIGHT * 0.6,
+          z: 500,
+          targetY: CHARACTER_HEIGHT * 0.6
         }
       }],
       localPlayer: null
@@ -40,8 +40,8 @@ export class ProfileView extends View {
         name: `model_${v}`,
         profileID: k,
         x: k * DELTA,
+        showName: false,
       }, this.assetManager);
-      profile.transform({ scaleX: 0.1, scaleY: 0.1, scaleZ: 0.1  })
       this.profiles.push(profile);
     });
   }
