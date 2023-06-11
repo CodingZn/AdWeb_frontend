@@ -24,7 +24,7 @@ export interface ITextState extends IRenderableState {
 const defaultTextParams = () => ({
   content: '',
   size: 20,
-  height: 20,
+  height: 1,
   font: 'helvetiker',
   fontStyle: 'regular'
 })

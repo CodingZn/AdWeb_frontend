@@ -1,3 +1,4 @@
+
 import { assign, random } from "lodash";
 import { CubeTexture, Mesh, MeshBasicMaterial } from "three";
 import { ProfileMap } from "../characters/Character";
@@ -20,7 +21,14 @@ export class TownView extends View {
       perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
     }));
     const self = this;
-    this.town = new Renderable()
+    this.town = new Renderable({ name: 'town', isCollider: (child) => {
+      const mesh = child as Mesh;
+      if (mesh.isMesh && mesh.name.startsWith("proxy")) {
+        (mesh.material as MeshBasicMaterial).visible = false;
+        return true;
+      }
+      return false;
+    }})
     this.assetManager.get('fbx/town.fbx')
     .then(res => {
       self.town.onLoad([res]);
@@ -43,6 +51,7 @@ export class TownView extends View {
         profileID: i % ProfileMap.length,
         x: random(-10000, 10000),
         z: random(-10000, 10000),
+        isCollider: true
       }, this.assetManager)
       .transform({ rotateY: random(-Math.PI, Math.PI, true) });
       this.npcs.push(npc);
@@ -60,14 +69,7 @@ export class TownView extends View {
       this.scene.background = this.background;
     }
     
-    this.add(this.town, (child) => {
-      const mesh = child as Mesh;
-      if (mesh.isMesh && mesh.name.startsWith("proxy")) {
-        (mesh.material as MeshBasicMaterial).visible = false;
-        return true;
-      }
-      return false;
-    });
+    this.add(this.town);
     
     const self = this;
     if (this.localPlayer !== null) {
@@ -77,7 +79,7 @@ export class TownView extends View {
     this.npcs.forEach(npc => self.add(npc, () => true));
 
     this.move(dt);
-    
+
     this.sceneManager.render(this.camera);
   }
 

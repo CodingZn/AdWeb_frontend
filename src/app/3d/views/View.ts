@@ -6,12 +6,10 @@ import { ControlManager, IDestroyer } from "../managers/ControlManager";
 import { ObjectManager } from "../managers/ObjectManager";
 import { ICameraParams, PerspectiveManager } from "../managers/PerspectiveManager";
 import { SceneManager } from "../managers/SceneManager";
-import { sgn } from "../../utils/function";
 import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
 import { IRenderableState, Renderable } from "../utils/Renderable";
 import { Animatable, IAnimatable } from "../utils/Animatable";
-import { Text } from "../utils/Text";
-import { CHARACTER_HEIGHT } from "../characters/Character";
+import { CHARACTER_HEIGHT, EYE_HEIGHT } from "../characters/Character";
 
 export interface IManagers {
   sceneManager: SceneManager,
@@ -82,7 +80,6 @@ export abstract class View {
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
   private eventMap = new Map<string | symbol | number, Set<(...args: any) => any>>();
   private lastPerpectiveIndex: number | undefined;
-  private aim: Renderable;
 
   constructor(options: IViewOption) {
     const { 
@@ -111,7 +108,7 @@ export abstract class View {
       return null;
     }
     this.perspectiveManager.get(PerspectiveType.FIRST, {
-      x: 0, y: CHARACTER_HEIGHT * 0.8, z: 0, 
+      x: 0, y: EYE_HEIGHT, z: 0, 
       parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: 25, z: state.z + 100 }) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
@@ -130,8 +127,6 @@ export abstract class View {
         ActionMap.set(anim, res.animations[0])
       }) 
     }) 
-    // 准星
-    this.aim = new Text({ content: '+', color: 0x0000ff, size: 5, height: 5 }, assetManager);
   }
 
   public get name() { return this._name; }
@@ -152,10 +147,9 @@ export abstract class View {
       this.camera, 
       this.onMove.bind(this), 
       this.onSwitchPerspective.bind(this)
-    )
+    );
     this.scene = this.sceneManager.switch(this.name);
     this.scene.add(this.camera as Camera);
-    this.camera?.add(this.aim.object);
     this.mounted(props);
     return this;
   }
@@ -224,7 +218,7 @@ export abstract class View {
     if ((renderable as Animatable).animate) {
       this.animatables.add((renderable as Animatable));
     }
-    this.sceneManager.add(renderable, isCollider);
+    this.sceneManager.add(renderable);
   }
 
   /**
@@ -293,19 +287,11 @@ export abstract class View {
     // lock 状态下，玩家角度由相机更新
     if (this.controlManager.locked) {
       const { direction } = this.controlManager;
-      const { direction: playerDir } = this.localPlayer;
-      // 只有 xz 平面上的转动
-      direction.setY(0).normalize();
-      playerDir.setY(0).normalize();
-      // 计算 xy 平面上的旋转弧度
-			if (this.perspectiveManager.active === PerspectiveType.FRONT) playerDir.negate();
-			const rad = direction.angleTo(playerDir) * sgn(playerDir.cross(direction).y);
-      if (Math.abs(rad) > 0.001) {
-				this.localPlayer.transform({ rotateY: rad })
-			}
+      if (this.perspectiveManager.active === PerspectiveType.FRONT) direction.negate();
+      this.localPlayer.direction = direction;
     }
     
-    this.movables.forEach(v => v.move(dt, this.sceneManager.colliders));    
+    this.movables.forEach(v => v.move(dt, this.sceneManager.renderables));    
     this.animatables.forEach(v => v.animate(dt));    
   }
 }

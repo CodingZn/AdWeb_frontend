@@ -1,8 +1,9 @@
-import { Object3D, Event, Vector3 } from "three";
+import { Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { Character, ICharacterParams } from "./Character";
 import { Actions } from "../views/View";
 import { random } from "lodash";
+import { Renderable } from "../utils/Renderable";
 
 export interface INPCParams extends ICharacterParams {}
 
@@ -11,7 +12,7 @@ export class NPC extends Character {
     super(params, assetManager);
   }
 
-  public override move(dt: number, colliders?: Iterable<Object3D<Event>> | undefined): { x: number; y: number; z: number; } {
+  public override move(dt: number, colliders?: Iterable<Renderable>): { x: number; y: number; z: number; } {
     // 走累了就停一下
     if (this.actionDuration > 5000) {
         this.moveState.forward = this.action === Actions.IDLE ? 1 : 0;

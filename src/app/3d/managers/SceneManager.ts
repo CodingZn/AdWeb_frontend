@@ -27,7 +27,7 @@ const defaultParams = () => ({
 interface ISceneState {
   ambient: AmbientLight | null,
   sun: DirectionalLight | null,
-  colliders: Set<Object3D>
+  renderables: Set<Renderable>
 }
 
 // todo 目前 sun 不可配置
@@ -72,9 +72,9 @@ export class SceneManager {
     this.onResize();
   }
 
-  public get colliders() { 
-    if (this.activeName === null) return new Set<Object3D>();
-    return (this.stateMap.get(this.activeName) as ISceneState).colliders;
+  public get renderables() { 
+    if (this.activeName === null) return new Set<Renderable>();
+    return this.stateMap.get(this.activeName)!.renderables;
   }
 
   /**
@@ -120,57 +120,14 @@ export class SceneManager {
    * @param isCollider 判断 renderable 的所有孩子是否为障碍物
    * @returns 
    */
-  public add(renderable: Renderable, isCollider?: (object: Object3D) => Boolean) {
-    const { activeName, activeScene } = this;
+  public add(renderable: Renderable) {
+    const { activeName, activeScene, stateMap } = this;
     if (activeScene === null) {
       console.warn('No scene to add object to!');
     } else {
       activeScene.add(renderable.object);
-      if (isCollider) {
-        const colliderSet = this.stateMap.get(activeName as string)?.colliders as Set<Object3D>;
-        renderable.object.traverse(child => {
-          if (isCollider(child)) {
-            colliderSet.add(child);
-          }
-        })
-      }
+      stateMap.get(activeName!)!.renderables.add(renderable);
    }
-  }
-
-  /**
-   * 
-   * @param renderable 
-   * @param dir 世界坐标系下的方向，默认为面朝方向
-   * @param distance 相隔最小距离，默认为 10
-   * @returns 
-   */
-  public collide(renderable: Renderable | Object3D, dir?: { x?: number, y?: number, z?: number }, distance?: number) {
-    if (this.activeName === null) {
-      console.warn('No scene active to check colliders!');
-      return null;
-    }
-    
-    let object = renderable as Object3D;
-    if (renderable instanceof Renderable) {
-      object = renderable.object;
-    }
-    const pos = new Vector3();
-    object.getWorldPosition(pos);
-    const dirVec = new Vector3();
-    if (dir !== undefined) {
-      dirVec.set(dir.x || 0, dir.y || 0, dir.z || 0);
-    } else {
-      object.getWorldDirection(dirVec);
-    }
-    dirVec.normalize();
-    const raycaster = new Raycaster(pos, dirVec);
-    const colliderSet = this.stateMap.get(this.activeName)?.colliders as Set<Object3D>;
-    const intersect = raycaster.intersectObjects(Array.from(colliderSet));
-    if (intersect.length > 0 && intersect[0].distance < (distance || 10)) {
-			return intersect[0];
-		} else {
-      return null;
-    }
   }
 
   /**
@@ -212,7 +169,7 @@ export class SceneManager {
       state = {
         sun: null,
         ambient: null,
-        colliders: new Set()
+        renderables: new Set<Renderable>()
       };
     }
     const newParams = Object.assign(oldParams || {}, params);

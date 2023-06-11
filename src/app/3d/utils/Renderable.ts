@@ -24,7 +24,8 @@ export interface IRenderableParams {
     x?: number, 
     y?: number, 
     z?: number,
-  }
+  },
+  isCollider?: boolean | ((child: Object3D) => boolean),
 }
 
 export interface ITransformType {
@@ -45,7 +46,8 @@ export interface IRenderableState extends IRenderableParams, IPosition {
   x: number, 
   y: number, 
   z: number,
-  euler: IEuler
+  euler: IEuler,
+  isCollider?: boolean | ((child: Object3D) => boolean),
 }
 
 export const defaultRenderableParams: () => IRenderableState = () => ({
@@ -59,11 +61,13 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
     x: 0,
     y: 0,
     z: 0
-  }
+  },
+  isCollider: false,
 })
 
 export class Renderable {
   public object: Object3D;
+  protected isCollider: boolean | ((child: Object3D) => boolean) = false; 
   private _name: string = '';
   private watchers: Map<string | number | symbol, (newState: IRenderableState, oldState: IRenderableState) => any> = new Map();
 
@@ -76,7 +80,7 @@ export class Renderable {
 
   public get name() { return this._name; }
 
-  public set name(v) { this._name = v; this.object.traverse(child => { child.name = v; }) }
+  public set name(v) { this._name = v; this.object.name = v; }
 
   public get state(): IRenderableState {
     const { 
@@ -90,7 +94,21 @@ export class Renderable {
 
   public get parent() { return this.object.parent; }
 
-  public get direction() { return this.object.getWorldDirection(new Vector3()).normalize(); }
+  public get direction(): IPosition { return this.object.getWorldDirection(new Vector3()).normalize(); }
+
+  public get colliders() {
+    const { isCollider } = this;
+    const colliders = new Set<Object3D>();
+    this.object.traverse(child => {
+      if (
+        isCollider === true || 
+        (isFunction(isCollider) && isCollider(child))
+      ) { 
+        colliders.add(child);
+      }
+    })
+    return colliders;
+  }
 
   public update(params: IRenderableParams) {
     return this._update(this.state, params);
@@ -219,8 +237,6 @@ export class Renderable {
         if (texture !== undefined) {
           material.map = texture;
         }
-
-        
       }
     });
     return this;
@@ -238,10 +254,12 @@ export class Renderable {
       x, y, z, 
       euler: { x: ex, y: ey, z: ez }, 
       color, 
+      isCollider,
       visible } = newState;
     this.object.position.set(x, y, z);
     this.object.quaternion.setFromEuler(new Euler(ex, ey, ez));
     this.name = name;
+    this.isCollider = isCollider!;
     this.object.visible = visible;
     
     this.notify(oldState);

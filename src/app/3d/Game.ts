@@ -57,6 +57,7 @@ export class Game {
         x: 0,
         y: 0,
         z: -1500,
+        isCollider: true
       }, 
       assetManager);
     this.localPlayer = localPlayer;

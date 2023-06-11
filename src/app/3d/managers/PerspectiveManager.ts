@@ -77,7 +77,6 @@ export class PerspectiveManager {
       this.cameraMap.set(name, camera);
       state = Object.assign(defaultParams(), params);
       this.cameraStateMap.set(name, state);
-      camera.add()
     } else {
       state = Object.assign(this.cameraStateMap.get(name) as IState, params);
     }

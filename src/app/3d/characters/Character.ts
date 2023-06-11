@@ -52,12 +52,14 @@ export const ProfileMap = [
 ];
 
 export const CHARACTER_HEIGHT = 270;
+export const EYE_HEIGHT = 0.8 * CHARACTER_HEIGHT;
 
 export abstract class Character extends AnimateMoveable {
   protected assetManager: AssetManager;
   protected characterObject: Object3D | null = null;
   protected _profileID: number = -1;
   protected nameText: Text;
+  // protected proxy: Renderable;
 
   constructor(params: ICharacterParams, assetManager: AssetManager) {
     super(assign({ actionMap: ActionMap }, params));
@@ -65,13 +67,12 @@ export abstract class Character extends AnimateMoveable {
     this.idle = ActionMap.get(Actions.IDLE) as AnimationClip;
     this.nameText = new Text({ 
       content: this.name, 
-      size: 20,
-      height: 20,
       x: - this.name.length * 10,
       y: CHARACTER_HEIGHT + 30,
       color: random(0x0, 0xffffff)
     }, assetManager);
     this.add(this.nameText);
+    // this.proxy = 
     this.update(assign(defaultCharacterState(), params));
   }
 
@@ -81,10 +82,10 @@ export abstract class Character extends AnimateMoveable {
     return assign({ profileID, h, pb, action }, super.state);
   }
 
-  public override collide(colliders?: Iterable<Object3D<Event>> | undefined, dir?: { x?: number | undefined; y?: number | undefined; z?: number | undefined; } | undefined, distance?: number | undefined): Intersection<Object3D<Event>> | null {
+  public override collide(colliders?: Iterable<Renderable>, dir?: { x?: number; y?: number; z?: number; }, distance?: number) {
     const { name, object } = this;
     const pos = new Vector3();
-    pos.y = CHARACTER_HEIGHT * 0.6;
+    pos.y = EYE_HEIGHT;
     object.getWorldPosition(pos);
     // 防止将自身当作障碍
     const filteredColliders = Array.from(colliders || []).filter(v => v.name !== name);
@@ -97,7 +98,7 @@ export abstract class Character extends AnimateMoveable {
 
   public get profileID() { return this._profileID; }
 
-  public override move(dt: number, colliders?: Iterable<Object3D>) {
+  public override move(dt: number, colliders?: Iterable<Renderable>) {
     // 根据动作更新速度
     if (this.action === Actions.RUNNING) {
       this.velocity = RUNNING_VELOCITY;
