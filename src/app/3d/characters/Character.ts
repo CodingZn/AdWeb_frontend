@@ -1,8 +1,10 @@
-import { assign } from "lodash";
-import {  AnimationClip, AnimationMixer, Object3D } from "three";
+import { assign, random } from "lodash";
+import {  AnimationClip, AnimationMixer, Event, Intersection, Mesh, Object3D, Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { AnimateMoveable, IAnimateMoveableParams, IAnimateMoveableState } from "../utils/AnimateMoveable";
-import { defaultRenderableParams } from "../utils/Renderable";
+import { Moveable, RUNNING_VELOCITY, WALKING_VELOCITY, } from "../utils/Moveable";
+import { defaultRenderableParams, Renderable } from "../utils/Renderable";
+import { Text } from "../utils/Text";
 import { ActionMap, Actions } from "../views/View";
 
 export interface ICharacterParams extends IAnimateMoveableParams {
@@ -49,15 +51,28 @@ export const ProfileMap = [
   'Waitress'
 ];
 
+export const CHARACTER_HEIGHT = 270;
+export const EYE_HEIGHT = 0.8 * CHARACTER_HEIGHT;
+
 export abstract class Character extends AnimateMoveable {
   protected assetManager: AssetManager;
   protected characterObject: Object3D | null = null;
   protected _profileID: number = -1;
+  protected nameText: Text;
+  // protected proxy: Renderable;
 
   constructor(params: ICharacterParams, assetManager: AssetManager) {
     super(assign({ actionMap: ActionMap }, params));
     this.assetManager = assetManager;
     this.idle = ActionMap.get(Actions.IDLE) as AnimationClip;
+    this.nameText = new Text({ 
+      content: this.name, 
+      x: - this.name.length * 10,
+      y: CHARACTER_HEIGHT + 30,
+      color: random(0x0, 0xffffff)
+    }, assetManager);
+    this.add(this.nameText);
+    // this.proxy = 
     this.update(assign(defaultCharacterState(), params));
   }
 
@@ -67,14 +82,28 @@ export abstract class Character extends AnimateMoveable {
     return assign({ profileID, h, pb, action }, super.state);
   }
 
+  public override collide(colliders?: Iterable<Renderable>, dir?: { x?: number; y?: number; z?: number; }, distance?: number) {
+    const { name, object } = this;
+    const pos = new Vector3();
+    pos.y = EYE_HEIGHT;
+    object.getWorldPosition(pos);
+    // 防止将自身当作障碍
+    const filteredColliders = Array.from(colliders || []).filter(v => v.name !== name);
+    if (dir !== undefined) {
+      return Moveable.collide(pos, dir, filteredColliders, distance);
+    } else {
+      return Moveable.collide(pos, object.getWorldDirection(new Vector3()), filteredColliders, distance);
+    }
+  }
+
   public get profileID() { return this._profileID; }
 
-  public override move(dt: number, colliders?: Iterable<Object3D>) {
+  public override move(dt: number, colliders?: Iterable<Renderable>) {
     // 根据动作更新速度
     if (this.action === Actions.RUNNING) {
-      this.velocity = 50;
+      this.velocity = RUNNING_VELOCITY;
     } else {
-      this.velocity = 20;
+      this.velocity = WALKING_VELOCITY;
     }
     // 根据移动更新动作
     const { x, y, z } = super.move(dt, colliders);

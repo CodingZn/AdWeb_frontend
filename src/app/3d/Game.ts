@@ -52,11 +52,12 @@ export class Game {
     // init player
     const localPlayer = new LocalPlayer(
       { 
-        name: 'steve', 
+        name: 'Steve', 
         profileID: 0,
         x: 0,
         y: 0,
-        z: -150,
+        z: -1500,
+        isCollider: true
       }, 
       assetManager);
     this.localPlayer = localPlayer;

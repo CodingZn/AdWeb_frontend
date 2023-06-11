@@ -189,7 +189,6 @@ export class PerspectiveManager {
       const { x: sx, y: sy, z: sz  } = renderable.object.scale;
       // 距离是世界坐标系下的，所以先还原缩放
       obj.position.set(1 / sx * offset.x, 1 / sy * offset.y, 1 / sz * offset.z);
-      
       const { x, y, z } = obj.getWorldPosition(new Vector3());
       self._update(name, { x, y, z });
       if (lookAt === undefined) {
