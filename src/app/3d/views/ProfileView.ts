@@ -37,6 +37,7 @@ export class ProfileView extends View {
     }));
     ProfileMap.forEach((v, k) => {
       const profile = new Player({
+        id: k + '',
         name: `model_${v}`,
         profileID: k,
         x: k * DELTA,

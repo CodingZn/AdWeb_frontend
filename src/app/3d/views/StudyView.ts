@@ -70,6 +70,8 @@ export class StudyView extends View {
 
     for (const npc of this.npcs) this.add(npc);
 
+    for (const [id, player] of this.playerMap) this.add(player);
+
     this.add(this.teachingBuilding);
 
     this.move(dt);

@@ -1,4 +1,5 @@
-import { AmbientLight, AxesHelper, Camera, Color, DirectionalLight, Object3D, Raycaster, Scene, Vector2, Vector3, WebGLRenderer } from "three";
+import { AmbientLight, Camera, Color, DirectionalLight, Object3D, Raycaster, Scene, Vector2, Vector3, WebGLRenderer } from "three";
+import { addDisposableEventListener, Disposable } from "../utils/Disposable";
 import { Renderable } from "../utils/Renderable";
 
 export interface ISceneManagerOption {
@@ -50,7 +51,7 @@ const sunFactory = (light: number | null) => {
 }
 
 
-export class SceneManager {
+export class SceneManager extends Disposable {
   private options: ISceneManagerOption;
   private activeName: string | null = null;
   private sceneMap: Map<string, Scene> = new Map();
@@ -59,6 +60,7 @@ export class SceneManager {
   private renderer: WebGLRenderer;
   
   constructor(options: ISceneManagerOption) {
+    super();
     this.options = Object.assign(defaultOption(), options);
 
     // init renderer
@@ -68,7 +70,11 @@ export class SceneManager {
     const { container } = this.options;
     container.appendChild(this.renderer.domElement);
     
-    window.addEventListener('resize', this.onResize.bind(this));
+    this._register(addDisposableEventListener(window, 'resize', this.onResize.bind(this)));
+    const self = this;
+    this._register({
+      dispose: () => self.destory()
+    })
     this.onResize();
   }
 
@@ -142,6 +148,7 @@ export class SceneManager {
   }
 
   public destory() {
+    this.sceneMap.forEach(scene => scene.clear());
     this.options.container.removeChild(this.renderer.domElement);
   }
   /**

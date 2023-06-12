@@ -1,7 +1,7 @@
 import { cloneDeep } from "lodash";
 import { Object3D, PerspectiveCamera, Vector3 } from "three";
+import { addDisposableEventListener, Disposable } from "../utils/Disposable";
 import { IPosition, IRenderableState, Renderable } from "../utils/Renderable";
-import { PerspectiveType } from "../views/View";
 
 export interface IPerspectiveManagerOption {
   container?: HTMLElement,
@@ -37,7 +37,7 @@ const defaultParams: () => IState = () => ({
   z: 10,
 })
 
-export class PerspectiveManager {
+export class PerspectiveManager extends Disposable {
   private options: IPerspectiveManagerOption;
   private activeName: string | symbol | null = null;
   private cameraMap: Map<string | symbol, PerspectiveCamera>;
@@ -45,11 +45,18 @@ export class PerspectiveManager {
   private _aspect: number = 1;
 
   constructor(options: IPerspectiveManagerOption) {
+    super();
     this.options = Object.assign(defaultOption(), options);
-    window.addEventListener('resize', this.onResize.bind(this));
+    this._register(addDisposableEventListener(window, 'resize', this.onResize.bind(this)));
     this.onResize();
     this.cameraMap = new Map();
     this.cameraStateMap = new Map();
+    const self = this;
+    this._register({
+      dispose: () => {
+        self.cameraMap.forEach(camera => camera.clear());
+      }
+    })
   }
 
   public get camera() {

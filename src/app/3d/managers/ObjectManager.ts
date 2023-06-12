@@ -1,5 +1,6 @@
 import { AssetManager } from "./AssetManager";
 import { IRenderableState, IRenderableParams, Renderable } from "../utils/Renderable";
+import { Disposable } from "../utils/Disposable";
 
 export interface IObjectParams extends IRenderableParams {
   url?: string | string[],
@@ -10,11 +11,12 @@ export interface IObjectManagerOption {
   assetManager: AssetManager;
 }
 
-export class ObjectManager {
+export class ObjectManager extends Disposable {
   private objectMap: Map<string, Renderable>;
   private assetManager: AssetManager;
 
   constructor(options: IObjectManagerOption) {
+    super();
     this.objectMap = new Map();
     this.assetManager = options.assetManager;
   }

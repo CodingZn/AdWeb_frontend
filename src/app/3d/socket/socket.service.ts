@@ -113,4 +113,12 @@ export class SocketService {
   updatePlayer(player: Player) {
     this.socket.emit(ServerEvent.UpdatePlayer, player);
   }
+
+  connect() {
+    this.socket.connect();
+  }
+
+  disconnect() {
+    this.socket.disconnect();
+  }
 }

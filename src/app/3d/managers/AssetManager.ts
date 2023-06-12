@@ -1,6 +1,7 @@
 import { Loader, FileLoader, ObjectLoader, TextureLoader, CubeTextureLoader } from "three";
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import { Disposable } from "../utils/Disposable";
 
 export interface ILoader extends Loader {
   load(
@@ -59,11 +60,12 @@ const LoaderMatcher: Matcher[] = [
   { test: /./, use: FileLoader }
 ]
 
-export class AssetManager {
+export class AssetManager extends Disposable {
   private assetMap: Map<string, any>;
   private assetsPath: string;
 
   constructor(private options: IAssetManagerOption) {
+    super();
     this.assetMap = new Map();
     this.assetsPath = options.assetsPath;
   }

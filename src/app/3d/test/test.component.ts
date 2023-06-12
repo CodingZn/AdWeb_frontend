@@ -1,19 +1,13 @@
-import { Component, ElementRef } from '@angular/core';
+import { Component } from '@angular/core';
 import * as THREE from 'three';
 import { Game } from '../Game';
 import {
   SocketService,
-  SocketServiceObservableTokens,
 } from '../socket/socket.service';
-import { Subscription, tap } from 'rxjs';
-import { ForwardMessageParams, UpdatePlayerParams } from '../socket/model';
+import { UserSessionService } from 'src/app/user-session.service';
 
 // for debug
 window.THREE = THREE;
-
-// type alias for understanding
-type Message = ForwardMessageParams;
-type Player = UpdatePlayerParams;
 
 @Component({
   standalone: true,
@@ -24,45 +18,15 @@ type Player = UpdatePlayerParams;
 export class TestComponent {
   private game: Game;
 
-  private subscriptions: Subscription[] = [];
-
-  constructor(private socketService: SocketService) {
+  constructor(userSessionService: UserSessionService, socketService: SocketService) {
     const container = document.body;
 
-    const game = new Game({ container });
+    const game = new Game({ container, socketService, userSessionService });
     (window as any).game = game;
     this.game = game;
-
-    /*
-    handle receive message and update player here ...
-    or just pass the observables into the deeper layer
-    */
-    this.subscriptions.push(
-      this.socketService
-        .getObservable<Message>(SocketServiceObservableTokens.Message)
-        ?.pipe(
-          tap((message) => {
-            // do real handling here
-          })
-        )
-        .subscribe()
-    );
-
-    this.subscriptions.push(
-      this.socketService
-        .getObservable<Player>(SocketServiceObservableTokens.Player)
-        ?.pipe(
-          tap((player) => {
-            // do real handling here
-          })
-        )
-        .subscribe()
-    );
   }
 
   ngOnDestroy() {
-    this.game.destory();
-
-    this.subscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.game.dispose();
   }
 }

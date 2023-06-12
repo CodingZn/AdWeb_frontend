@@ -1,12 +1,20 @@
 
+import { assign } from "lodash";
 import { AssetManager } from "../managers/AssetManager";
-import { Character, ICharacterParams } from "./Character";
+import { UpdatePlayerParams } from "../socket/model";
+import { Character, ICharacterParams, ICharacterState } from "./Character";
 
-export interface IPlayerParams extends ICharacterParams {
-  showName?: boolean
+export interface IPlayerUpdateParams extends ICharacterParams {
+  id?: string,
+  showName?: boolean,
 }
 
-export interface IPlayerState extends IPlayerParams {
+export interface IPlayerParams extends IPlayerUpdateParams {
+  id: string
+}
+
+export interface IPlayerState extends ICharacterState {
+  id: string,
   name: string,
   profileID: number,
   x: number,
@@ -18,14 +26,29 @@ export interface IPlayerState extends IPlayerParams {
 }
 
 export class Player extends Character {
+  protected id: string;
   constructor(params: IPlayerParams, assetManager: AssetManager) {
     super(params, assetManager);
+    this.id = params.id;
   }
 
-  public override update(params: IPlayerParams) {
+  public override update(params: IPlayerUpdateParams) {
     if (params.showName !== undefined) {
       this.nameText.update({ visible: params.showName })
     }
     return super.update(params);
+  }
+
+  public override get state(): IPlayerState {
+    const { id } = this;
+    return assign(super.state, { id })
+  }
+
+  public toSocket(): UpdatePlayerParams {
+    return assign(this.state, { visible: true });
+  }
+
+  public fromSocket(player: UpdatePlayerParams) {
+    this.update(player);
   }
 }

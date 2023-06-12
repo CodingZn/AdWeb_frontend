@@ -10,6 +10,8 @@ import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
 import { IRenderableState, Renderable } from "../utils/Renderable";
 import { Animatable, IAnimatable } from "../utils/Animatable";
 import { CHARACTER_HEIGHT, EYE_HEIGHT } from "../characters/Character";
+import { Player } from "../characters/Player";
+import { Disposable } from "../utils/Disposable";
 
 export interface IManagers {
   sceneManager: SceneManager,
@@ -52,6 +54,7 @@ export const Actions: IActions = {
 export interface IViewOption extends IManagers {
   name: string,
   localPlayer?: LocalPlayer,
+  playerMap?: Map<string, Player>, 
   perspectives?: (string | symbol | { type: string | symbol, params: ICameraParams })[];
 }
 
@@ -65,7 +68,7 @@ const defaultViewOption = () => ({
 
 export const ActionMap = new Map<string, AnimationClip>();
 
-export abstract class View {
+export abstract class View extends Disposable {
   protected _name: string; 
   protected sceneManager: SceneManager;
   protected objectManager: ObjectManager;
@@ -75,6 +78,7 @@ export abstract class View {
   protected scene: Scene | null = null;
   protected camera: Camera | null = null;
   protected localPlayer: LocalPlayer | null;
+  protected playerMap: Map<string, Player> = new Map();
   protected movables: Set<IMoveable> = new Set();
   protected animatables: Set<IAnimatable> = new Set();
   protected perspectives: (string | symbol | { type: string | symbol, params: ICameraParams })[] = [];
@@ -82,6 +86,7 @@ export abstract class View {
   private lastPerpectiveIndex: number | undefined;
 
   constructor(options: IViewOption) {
+    super();
     const { 
       name,
       sceneManager,
@@ -90,6 +95,7 @@ export abstract class View {
       perspectiveManager, 
       controlManager,
       localPlayer,
+      playerMap,
       perspectives
     } = assign(defaultViewOption(), options);
     this.sceneManager = sceneManager;
@@ -98,6 +104,7 @@ export abstract class View {
     this.perspectiveManager = perspectiveManager;
     this.controlManager = controlManager;
     this.localPlayer = localPlayer || null;
+    this.playerMap = playerMap || new Map();
     this.perspectives = perspectives;
     this._name = name;
     // 初始化机位
@@ -120,7 +127,6 @@ export abstract class View {
       parent: localPlayer,
       lookAt: (state) => (lockedLookAtHandler(state) || { x: state.x, y: CHARACTER_HEIGHT, z: state.z }) })
     // 初始化动画
-    const self = this;
     keys(Actions).forEach(key => {
       const anim = Actions[key as keyof IActions];
       anim !== Actions.IDLE && assetManager.get(`fbx/anims/${anim}.fbx`).then(res => {

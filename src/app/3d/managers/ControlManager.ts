@@ -2,6 +2,7 @@ import { JoyStick } from "../lib/JoyStick";
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import { Camera, Vector3 } from "three";
 import { IMoveState } from "../utils/Moveable";
+import { Disposable, IEventDispatcher } from "../utils/Disposable";
 
 
 export interface IControlManagerOption {
@@ -31,10 +32,7 @@ const defaultControlManagerOptions = () => ({
 export interface IDestroyer {
   destory: (...args: any) => any
 }
-export interface IEventDispatcher {
-  addEventListener: (...args: any) => any,
-  removeEventListener: (...args: any) => any
-}
+
 export function delegate(el: IEventDispatcher, eventName: string, listener: (e: Event) => any): IDestroyer {
   el.addEventListener(eventName, listener);
   const destory = () => el.removeEventListener(eventName, listener);
@@ -42,7 +40,7 @@ export function delegate(el: IEventDispatcher, eventName: string, listener: (e: 
   return { destory }
 }
 
-export class ControlManager {
+export class ControlManager extends Disposable {
   private options: IControlManagerOption;
   private camera: Camera | null = null;
   private mounted: Boolean = false;
@@ -55,7 +53,14 @@ export class ControlManager {
   private customDestoryers: IDestroyer[] = [];
 
   constructor(options: IControlManagerOption) {
+    super();
     this.options = Object.assign(defaultControlManagerOptions(), options);
+    const self = this;
+    this._register({
+      dispose: () => {
+        if (self.mounted) { self.unmount(); }
+      }
+    })
   }
 
   public get locked() { return this.pointerLockControls?.isLocked || false; }

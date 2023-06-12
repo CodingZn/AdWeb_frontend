@@ -1,5 +1,6 @@
 import { isFunction } from "lodash";
 import { Group, Mesh, Object3D, Texture, Vector3, MeshBasicMaterial, Euler } from "three";
+import { Disposable } from "./Disposable";
 
 export interface IPosition { 
   x: number, 
@@ -64,17 +65,22 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
   isCollider: false,
 })
 
-export class Renderable {
+export class Renderable extends Disposable {
   public object: Object3D;
   protected isCollider: boolean | ((child: Object3D) => boolean) = false; 
   private _name: string = '';
   private watchers: Map<string | number | symbol, (newState: IRenderableState, oldState: IRenderableState) => any> = new Map();
 
   constructor(params?: IRenderableParams) {
+    super();
     this.object = new Group();
     if (params !== undefined) {
       this._update(defaultRenderableParams(), params);
     }
+    const self = this;
+    this._register({
+      dispose: () => self.object.clear()
+    })
   }
 
   public get uuid() { return this.object.uuid; }
