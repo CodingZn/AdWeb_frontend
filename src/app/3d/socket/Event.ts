@@ -7,6 +7,9 @@ export enum ServerEvent {
 };
 
 export enum ClientEvent {
+  Connect = 'connect',
+  Disconnect = 'disconnect',
+
   ReceiveMessage = 'receive message',
   UpdatePlayer = 'update player',
 };
