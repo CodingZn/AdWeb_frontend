@@ -1,5 +1,5 @@
 import { assign, random } from "lodash";
-import {  AnimationClip, AnimationMixer, Event, Intersection, Mesh, Object3D, Vector3 } from "three";
+import {  AnimationClip, AnimationMixer, Object3D, Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { AnimateMoveable, IAnimateMoveableParams, IAnimateMoveableState } from "../utils/AnimateMoveable";
 import { Moveable, RUNNING_VELOCITY, WALKING_VELOCITY, } from "../utils/Moveable";
@@ -54,6 +54,7 @@ export const ProfileMap = [
 export const CHARACTER_HEIGHT = 270;
 export const EYE_HEIGHT = 0.8 * CHARACTER_HEIGHT;
 export const METER = CHARACTER_HEIGHT / 1.7;
+export const STEP_OVER_HEIGHT = 50;
 
 export abstract class Character extends AnimateMoveable {
   protected assetManager: AssetManager;
@@ -85,7 +86,7 @@ export abstract class Character extends AnimateMoveable {
     const { uuid, object } = this;
     const pos = new Vector3();
     object.getWorldPosition(pos);
-    pos.y = 20;
+    pos.y += STEP_OVER_HEIGHT;
     
     // 防止将自身当作障碍
     const filteredColliders = Array.from(colliders || []).filter(v => v.uuid !== uuid);
@@ -120,7 +121,7 @@ export abstract class Character extends AnimateMoveable {
     // down
     const pos = new Vector3();
     this.object.getWorldPosition(pos);
-    pos.y += 50;
+    pos.y += STEP_OVER_HEIGHT;
     const intersect = Moveable.collide(pos, new Vector3(0, -1, 0), colliders, Infinity);
     let y = 0;
     if (intersect !== null) {

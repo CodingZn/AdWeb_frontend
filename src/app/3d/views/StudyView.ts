@@ -34,7 +34,7 @@ export class StudyView extends View {
     });
     // 教学楼
     this.teachingBuilding = new TeachingBuilding({
-      floors: 2,
+      floors: 3,
       isCollider: true
     });
     // debug

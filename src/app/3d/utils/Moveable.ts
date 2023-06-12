@@ -12,7 +12,7 @@ export interface IMoveState {
   up: number,
 }
 
-export const DISTANCE = 50;
+export const DISTANCE = 15;
 export const WALKING_VELOCITY = 200;
 export const RUNNING_VELOCITY = 500;
 
