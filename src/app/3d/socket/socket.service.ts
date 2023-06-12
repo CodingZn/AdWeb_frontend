@@ -19,8 +19,8 @@ export enum SocketServiceObservableTokens {
 @Injectable()
 export class SocketService {
   socket: Socket;
-  subscriptions = new Map<ClientEvent, Subscription>();
-
+  
+  private subscriptions: Subscription[] = [];
   private observables = new Map<SocketServiceObservableTokens, Observable<unknown>>();
   private subscribers = new Map<SocketServiceObservableTokens, Subscriber<unknown>>();
 
@@ -92,8 +92,7 @@ export class SocketService {
   }
 
   makeSubscription<T>(ev: ClientEvent, operator: Operator<T>) {
-    this.subscriptions.set(
-      ev,
+    this.subscriptions.push(
       createObservableFromSocket<T>(this.socket, ev).pipe(operator).subscribe()
     );
   }
@@ -104,7 +103,7 @@ export class SocketService {
 
   clearSubscriptions() {
     this.subscriptions.forEach((subscription) => subscription.unsubscribe());
-    this.subscriptions.clear();
+    this.subscriptions = [];
   }
 
   sendMessage(message: Message) {
