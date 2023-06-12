@@ -1,5 +1,5 @@
 import { Constructor } from "src/app/utils/constructor";
-import { DoubleSide, Mesh, MeshPhongMaterial, PlaneGeometry } from "three";
+import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
 import { IPosition, IRenderableParams, ITransformType, Renderable } from "./Renderable";
 
 export interface IBoxParams extends IRenderableParams {
@@ -18,12 +18,13 @@ export interface IBoxParams extends IRenderableParams {
 }
 
 interface IBoxSideConfig {
+  if?: boolean,
   ctor?: Constructor<Side>;
   params?: IBoxSideParams;
 }
 
 interface IBoxSideParams {
-  color: number,
+  color?: number,
   [key: string]: any
 }
 
@@ -32,9 +33,9 @@ interface IBoxSideParams {
  *   |
  *   |________
  *   |\       \
- *   |_\_ _ _ _\___  x (width)
+ *   |_\_ top _\___  x (width)
  * O \  \_______\
- *    \ |       | 
+ * left | front | 
  *     \|_______|
  *      \
  *       z (depth)
@@ -79,9 +80,8 @@ const BOX_SIDES_CONSTANT_PARAMS:
   }
 });
 
-
 export class Box extends Renderable {
-  protected sides: Side[] = [];
+  protected sideMap: Map<string, Side> = new Map();
   constructor(params: IBoxParams) {
     super(params);
     const { width, height, depth } = params;
@@ -89,6 +89,9 @@ export class Box extends Renderable {
     const CONSTANT_PARAMS = BOX_SIDES_CONSTANT_PARAMS(width, height, depth);
     for(const key in CONSTANT_PARAMS) {
       const sideConfig = (params.sides?.[key as keyof typeof params.sides] || {}) as IBoxSideConfig;
+      if (sideConfig.if === false) {
+        continue;
+      }
       const Ctor = (sideConfig.ctor || Side) as any;
       const sideParams = sideConfig.params;
       // 某一面特定颜色 > 整体颜色 > 默认
@@ -102,7 +105,7 @@ export class Box extends Renderable {
       const { size, position, transform } = CONSTANT_PARAMS[key];
       const side = new Ctor({ name: key, color, ...size, ...position, ...sideParams }); 
       if (transform !== undefined) side.transform(transform);
-      this.sides.push(side);
+      this.sideMap.set(key, side);
       this.add(side);
     }
   }
@@ -131,7 +134,7 @@ export class Side extends Renderable {
     const { width, height } = params;
     const geometry = new PlaneGeometry(width, height);
     const color = params.color === undefined ? 0xffffff : params.color;
-    const material = new MeshPhongMaterial( { color, side: DoubleSide } );
+    const material = new MeshBasicMaterial( { color, side: DoubleSide } );
     this.mesh = new Mesh(geometry, material);
     this.mesh.position.set(width / 2, height / 2, 0);
     this.add(this.mesh);

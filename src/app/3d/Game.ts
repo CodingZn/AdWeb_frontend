@@ -11,6 +11,7 @@ import { IManagers, IViewProps, View } from "./views/View";
 import { LocalPlayer } from "./characters/LocalPlayer";
 import { assign } from "lodash";
 import { SocketService } from "./socket/socket.service";
+import { StudyView, StudyViewEvent } from "./views/StudyView";
 
 interface IGameOption {
   container?: HTMLElement,
@@ -30,6 +31,7 @@ export class Game {
   private playerMap: Map<string, Player> = new Map();
   private localPlayer: LocalPlayer;
   private viewMap: Map<string, View> = new Map();
+  private prevView: View | null = null;
   
   private clock: Clock = new Clock();
   
@@ -57,9 +59,6 @@ export class Game {
       { 
         name: 'Steve', 
         profileID: 0,
-        x: 0,
-        y: 0,
-        z: -1500,
         isCollider: true
       }, 
       assetManager);
@@ -72,7 +71,7 @@ export class Game {
     });
     profileView.on(ProfileViewEvent.save, (profileID: number) => {
       localPlayer.update({ profileID });
-      self.switch(townView.name);
+      self.switch(this.prevView!.name);
     });
     profileView.on(ProfileViewEvent.exit, () => {
       self.switch(townView.name);
@@ -87,11 +86,27 @@ export class Game {
     townView.on(TownViewEvent.profile, (profileID: number) => {
       self.switch(profileView.name, { profileID });
     })
+    townView.on(TownViewEvent.learn, () => {
+      self.switch(studyView.name);
+    })
     this.viewMap.set(townView.name, townView);
+
+    const studyView = new StudyView({ 
+      name: 'study', 
+      localPlayer,
+      ...this.managers 
+    });
+    studyView.on(StudyViewEvent.profile, () => {
+      self.switch(profileView.name);
+    })
+    studyView.on(StudyViewEvent.town, () => {
+      self.switch(townView.name);
+    })
+    this.viewMap.set(studyView.name, studyView);
 
     const self = this;
     
-    this.switch(townView.name);
+    this.switch(studyView.name);
 
     this.render();
   }
@@ -103,6 +118,7 @@ export class Game {
   public switch(name: string, props?: IViewProps) {
     if (this.activeView !== null) {
       this.activeView.unmount();
+      this.prevView = this.activeView;
       this.activeView = null;
     }
     const view = this.viewMap.get(name);

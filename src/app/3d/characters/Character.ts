@@ -53,13 +53,13 @@ export const ProfileMap = [
 
 export const CHARACTER_HEIGHT = 270;
 export const EYE_HEIGHT = 0.8 * CHARACTER_HEIGHT;
+export const METER = CHARACTER_HEIGHT / 1.7;
 
 export abstract class Character extends AnimateMoveable {
   protected assetManager: AssetManager;
   protected characterObject: Object3D | null = null;
   protected _profileID: number = -1;
   protected nameText: Text;
-  // protected proxy: Renderable;
 
   constructor(params: ICharacterParams, assetManager: AssetManager) {
     super(assign({ actionMap: ActionMap }, params));
@@ -72,7 +72,6 @@ export abstract class Character extends AnimateMoveable {
       color: random(0x0, 0xffffff)
     }, assetManager);
     this.add(this.nameText);
-    // this.proxy = 
     this.update(assign(defaultCharacterState(), params));
   }
 
@@ -83,12 +82,13 @@ export abstract class Character extends AnimateMoveable {
   }
 
   public override collide(colliders?: Iterable<Renderable>, dir?: { x?: number; y?: number; z?: number; }, distance?: number) {
-    const { name, object } = this;
+    const { uuid, object } = this;
     const pos = new Vector3();
-    pos.y = EYE_HEIGHT;
     object.getWorldPosition(pos);
+    pos.y = 20;
+    
     // 防止将自身当作障碍
-    const filteredColliders = Array.from(colliders || []).filter(v => v.name !== name);
+    const filteredColliders = Array.from(colliders || []).filter(v => v.uuid !== uuid);
     if (dir !== undefined) {
       return Moveable.collide(pos, dir, filteredColliders, distance);
     } else {
@@ -106,7 +106,7 @@ export abstract class Character extends AnimateMoveable {
       this.velocity = WALKING_VELOCITY;
     }
     // 根据移动更新动作
-    const { x, y, z } = super.move(dt, colliders);
+    const { x, z } = super.move(dt, colliders);
     let action = Actions.IDLE;
     if (x !== 0 || z !== 0) {
       if (this.action === Actions.RUNNING ||
@@ -117,6 +117,19 @@ export abstract class Character extends AnimateMoveable {
       }
     }
     this.action = action;
+    // down
+    const pos = new Vector3();
+    this.object.getWorldPosition(pos);
+    pos.y += 50;
+    const intersect = Moveable.collide(pos, new Vector3(0, -1, 0), colliders, Infinity);
+    let y = 0;
+    if (intersect !== null) {
+      let targetY = pos.y - intersect.distance;
+      const { y: curY } = this.state;
+      const newY = 0.8 * curY + 0.2 * targetY;
+      y = newY - curY;
+      this.update({ y: newY });
+    }
     return { x, y, z };
   }
 

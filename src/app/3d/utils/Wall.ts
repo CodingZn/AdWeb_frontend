@@ -1,4 +1,4 @@
-import { DoubleSide, Group, Material, Mesh, MeshPhongMaterial, Path, Shape, ShapeGeometry } from "three";
+import { DoubleSide, Material, Mesh, MeshBasicMaterial, Path, Shape, ShapeGeometry } from "three";
 import { ISideParams, Side } from "./Box";
 
 export interface IWallParams extends ISideParams {
@@ -52,7 +52,7 @@ export class Wall extends Side {
       shape.holes.push(hole);
     }
     this.geometry = new ShapeGeometry(shape);
-    this.material = new MeshPhongMaterial({ color, side: DoubleSide });
+    this.material = new MeshBasicMaterial({ color, side: DoubleSide });
     this.mesh = new Mesh(this.geometry, this.material);
     this.add(this.mesh);
   }

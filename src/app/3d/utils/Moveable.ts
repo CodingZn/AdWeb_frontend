@@ -40,15 +40,16 @@ export class Moveable extends Renderable implements IMoveable {
     }
     const intersect = raycaster.intersectObjects(colliders, false);
     if (intersect.length > 0 && intersect[0].distance < (distance || DISTANCE)) {
-			const { distance, object } = intersect[0];
+			const { object, distance } = intersect[0];
       return { 
-        distance,
+        distance: distance,
         object: map.get(object.uuid)!,
         target: object,
-        colliders
+        colliders,
+        more: intersect,
        };
 		} else {
-      return null;
+      return null
     }
   }
 
@@ -94,15 +95,6 @@ export class Moveable extends Renderable implements IMoveable {
       }
     }
     this.transform({ translateX: x, translateY: y, translateZ: z });
-    // down
-    const intersect = this.collide(renderables, new Vector3(0, -1, 0), Infinity);
-    if (intersect !== null) {
-      const { y: curY } = this.state;
-      let targetY = curY - intersect.distance;
-      const newY = 0.8 * curY + 0.2 * targetY;
-      y = newY - curY;
-      this.update({ y: newY });
-    }
     return { x, y, z };
   }
 }

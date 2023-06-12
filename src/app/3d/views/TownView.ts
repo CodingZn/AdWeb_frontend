@@ -3,53 +3,15 @@ import { assign, random } from "lodash";
 import { CubeTexture, Mesh, MeshBasicMaterial } from "three";
 import { ProfileMap } from "../characters/Character";
 import { NPC } from "../characters/NPC";
-import { Box } from "../utils/Box";
 import { Renderable } from "../utils/Renderable";
-import { Wall } from "../utils/Wall";
 import { IViewOption, PerspectiveType, View } from "./View"
 
 export interface ITownViewOption extends IViewOption {}
 
 export enum TownViewEvent {
-  profile
+  profile,
+  learn
 }
-
-const box = new Box({
-  z: -1600,
-  width: 1000, 
-  height: 500,
-  depth: 2000,
-  isCollider: true,
-  sides: {
-    front: {
-      ctor: Wall,
-      params: {
-        color: 0xff0000,
-        windows: [
-          {
-            // door
-            x: 100,
-            y: 0,
-            width: 200,
-            height: 300,
-          },
-          {
-            x: 750,
-            y: 250,
-            width: 150,
-            height: 150,
-          }
-        ]
-      }
-    },
-    bottom: {
-      params: {
-        color: 0x0
-      }
-    }
-  }
-});
-(window as any).box = box;
 
 export class TownView extends View {
   private town: Renderable;
@@ -98,6 +60,7 @@ export class TownView extends View {
   }
 
   public mounted() {
+    this.localPlayer!.update({ x: 0, y: 0, z: -1500 });
     this.controlManager.on('keyup', this.onKeyup.bind(this));
   }
 
@@ -108,8 +71,7 @@ export class TownView extends View {
       this.scene.background = this.background;
     }
     
-    // this.add(this.town);
-    this.add(box);
+    this.add(this.town);
     
     const self = this;
     if (this.localPlayer !== null) {
@@ -127,6 +89,8 @@ export class TownView extends View {
     switch((e as KeyboardEvent).key) {
       case 'p': 
         this.emit(TownViewEvent.profile, this.localPlayer?.profileID); break;
+      case 'l': 
+        this.emit(TownViewEvent.learn); break;
     }
   }
 }

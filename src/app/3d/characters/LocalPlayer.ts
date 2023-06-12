@@ -28,7 +28,7 @@ export class LocalPlayer extends Player {
     return this._direction || super.direction;
   };
   public override set direction(v) {
-    const dir = super.direction
+    const dir = super.direction;
     const direction = new Vector3(dir.x, dir.y, dir.z);
     // 只有 xz 平面上的转动
     const target = new Vector3(v.x, v.y, v.z);
@@ -53,7 +53,7 @@ export class LocalPlayer extends Player {
 
     // 调整准星
     let pos = this.object.position;
-    pos = new Vector3(pos.x, EYE_HEIGHT, pos.z)
+    pos = new Vector3(pos.x, EYE_HEIGHT + pos.y, pos.z)
     this.aim.object.lookAt(pos);
     const { x, y, z } = pos.addScaledVector(new Vector3(dir.x, dir.y, dir.z), 100);
     this.aim.update({ x, y, z });
