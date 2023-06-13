@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { Injectable } from '@angular/core';
 import { ClientEvent, ServerEvent } from './Event';
-import { ForwardMessageParams, UpdatePlayerParams } from './model';
+import { ExitSceneParams, ForwardMessageParams, UpdatePlayerParams } from './model';
 import { createObservableFromSocket } from 'src/app/utils/socketUtils';
 import { Observable, pipe, Subscriber, Subscription, tap } from 'rxjs';
 import { debugOutput, Operator } from 'src/app/utils/operator';
@@ -14,6 +14,8 @@ type Player = UpdatePlayerParams;
 export enum SocketServiceObservableTokens {
   Message,
   Player,
+  ExitSceneRoom,
+  Disconnect,
 }
 
 @Injectable()
@@ -43,6 +45,20 @@ export class SocketService {
       })
     );
 
+    this.observables.set(
+      SocketServiceObservableTokens.ExitSceneRoom,
+      new Observable((subscriber) => {
+        this.subscribers.set(SocketServiceObservableTokens.ExitSceneRoom, subscriber);
+      })
+    );
+
+    this.observables.set(
+      SocketServiceObservableTokens.Disconnect,
+      new Observable((subscriber) => {
+        this.subscribers.set(SocketServiceObservableTokens.Disconnect, subscriber);
+      })
+    );
+
     // connect event
     this.makeSubscription(
       ClientEvent.Connect,
@@ -54,7 +70,10 @@ export class SocketService {
       ClientEvent.Disconnect,
       pipe(
         debugOutput('disconnect', () => `socket disconnected`),
-        tap(() => this.clearSubscriptions())
+        tap(() => {
+          this.subscribers.get(SocketServiceObservableTokens.Disconnect)?.next();
+          this.clearSubscriptions()
+        })
       )
     );
 
@@ -86,6 +105,21 @@ export class SocketService {
         // push the player
         tap((player) => {
           this.subscribers.get(SocketServiceObservableTokens.Player)?.next(player);
+        })
+      )
+    );
+
+    // exit scene event
+    this.makeSubscription<ExitSceneParams>(
+      ClientEvent.ExitSceneRoom,
+      pipe(
+        debugOutput(
+          'exit scene',
+          ({ id }) => `Player ${id} leave`
+        ),
+
+        tap((params) => {
+          this.subscribers.get(SocketServiceObservableTokens.ExitSceneRoom)?.next(params);
         })
       )
     );
@@ -121,4 +155,6 @@ export class SocketService {
   disconnect() {
     this.socket.disconnect();
   }
+
+  get connected() { return this.socket.connected; }
 }

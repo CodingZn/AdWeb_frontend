@@ -10,6 +10,7 @@ export type UpdatePlayerParams = {
   id: string;
   name: string;
   profileID: number;
+  scene: string;
 
   x: number;
   y: number;
@@ -18,4 +19,8 @@ export type UpdatePlayerParams = {
   pb: number;
 
   action: string;
+};
+
+export type ExitSceneParams = {
+  id: string;
 };

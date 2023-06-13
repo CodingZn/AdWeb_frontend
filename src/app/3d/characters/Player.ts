@@ -44,8 +44,8 @@ export class Player extends Character {
     return assign(super.state, { id })
   }
 
-  public toSocket(): UpdatePlayerParams {
-    return assign(this.state, { visible: true });
+  public toSocket(scene: string): UpdatePlayerParams {
+    return assign(this.state, { visible: true, scene });
   }
 
   public fromSocket(player: UpdatePlayerParams) {

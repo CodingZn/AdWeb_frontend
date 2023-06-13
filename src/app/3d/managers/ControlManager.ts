@@ -3,6 +3,8 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import { Camera, Vector3 } from "three";
 import { IMoveState } from "../utils/Moveable";
 import { Disposable, IEventDispatcher } from "../utils/Disposable";
+import { Chat } from "../lib/Chat";
+import { Player } from "../characters/Player";
 
 
 export interface IControlManagerOption {
@@ -51,6 +53,8 @@ export class ControlManager extends Disposable {
   private pointerLockControls: PointerLockControls | null = null;
   private destoryers: IDestroyer[] = [];
   private customDestoryers: IDestroyer[] = [];
+  private _chat: Chat;
+  private _isChat: boolean = false;
 
   constructor(options: IControlManagerOption) {
     super();
@@ -61,6 +65,9 @@ export class ControlManager extends Disposable {
         if (self.mounted) { self.unmount(); }
       }
     })
+    this._chat = new Chat((msg: string) => {
+      console.log('send', msg);
+    });
   }
 
   public get locked() { return this.pointerLockControls?.isLocked || false; }
@@ -141,6 +148,10 @@ export class ControlManager extends Disposable {
     return this;
   }
 
+  public chat(target?: Player) {
+    this._onChat(target);
+  }
+
   private _lock() {
     this.pointerLockControls?.lock();
   }
@@ -193,6 +204,8 @@ export class ControlManager extends Disposable {
         moveState.up = 0; break;
       case 'q':
         this._onSwitchPerpective(); break;
+      case 'c':
+        this._onChat(); break;
     }
     this._onMove();
   }
@@ -251,4 +264,13 @@ export class ControlManager extends Disposable {
     }
   }
 
+  private _onChat(target?: Player) {
+    const { container } = this.options;
+    if (this._isChat === false) {
+      container!.appendChild(this._chat.dom);
+    } else {
+      container!.removeChild(this._chat.dom);
+    }
+    this._isChat = !this._isChat;
+  }
 }

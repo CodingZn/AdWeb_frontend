@@ -114,8 +114,12 @@ class TeachingBuildingFloor extends Renderable {
             }]
           } 
         },
-      }
+      },
+      isCollider: true
     });
+    for (const collider of this.box.colliders) {
+      this._colliders.add(collider);
+    }
     for (let i = 0; i < CLASSROOM_COUNT_PER_FLOOR; i++) {
       this.classrooms.push(new Classroom({
         x:  i * (CLASSROOM_WIDTH + DELTA / 2), 

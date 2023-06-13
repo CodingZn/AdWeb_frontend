@@ -12,6 +12,7 @@ export enum ClientEvent {
 
   ReceiveMessage = 'receive message',
   UpdatePlayer = 'update player',
+  ExitSceneRoom = "exit scene room",
 };
 
 export type Event = ServerEvent | ClientEvent;

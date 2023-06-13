@@ -64,12 +64,11 @@ export class TownView extends View {
     
     this.add(this.town);
     
-    const self = this;
-    if (this.localPlayer !== null) {
-      this.add(this.localPlayer);
-    }
+    this.add(this.localPlayer!);
 
-    this.npcs.forEach(npc => self.add(npc));
+    for (const npc of this.npcs) this.add(npc);
+
+    for (const [_, player] of this.playerMap) this.add(player);
 
     this.move(dt);
 

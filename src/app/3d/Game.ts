@@ -12,7 +12,7 @@ import { SocketService, SocketServiceObservableTokens } from "./socket/socket.se
 import { StudyView, StudyViewEvent } from "./views/StudyView";
 import { UserSessionService } from "../user-session.service";
 import { Subscription, tap } from "rxjs";
-import { ForwardMessageParams, UpdatePlayerParams } from "./socket/model";
+import { ExitSceneParams, ForwardMessageParams, UpdatePlayerParams } from "./socket/model";
 import { Player } from "./characters/Player";
 import { Disposable } from "./utils/Disposable";
 
@@ -20,6 +20,7 @@ interface IGameOption {
   container?: HTMLElement,
   socketService: SocketService,
   userSessionService: UserSessionService,
+  onExit: () => any
 }
 
 
@@ -39,15 +40,17 @@ export class Game extends Disposable {
   private socketService!: SocketService;
   private userSessionService!: UserSessionService;
   private subscriptions: Subscription[] = [];
+  private onExit: () => any;
   
   private clock: Clock = new Clock();
   
   constructor(option: IGameOption) {
     super();
-    const { container, userSessionService, socketService } = assign(defaultOption(), option);
+    const { container, userSessionService, socketService, onExit } = assign(defaultOption(), option);
     this.container = container;
     this.userSessionService = userSessionService;
     this.socketService = socketService;
+    this.onExit = onExit;
 
     this.initManagers();
 
@@ -67,6 +70,9 @@ export class Game extends Disposable {
       this.activeView = null;
     }
     const view = this.viewMap.get(name);
+    // 切换场景，清空当前玩家
+    this.playerMap.forEach(player => player.destory());
+    this.playerMap.clear();
     if (view !== undefined) {
       this.activeView = view.mount(props);
     } else {
@@ -80,7 +86,7 @@ export class Game extends Disposable {
 
     if (this.activeView !== null) this.activeView.render(dt);
 
-    this.socketService.updatePlayer(this.localPlayer.toSocket());
+    this.socketService.updatePlayer(this.localPlayer.toSocket(this.activeView!.name));
 
     requestAnimationFrame( () => self.render() );
   }
@@ -110,10 +116,23 @@ export class Game extends Disposable {
     */
     this.subscriptions.push(
       this.socketService
+        .getObservable<never>(SocketServiceObservableTokens.Disconnect)
+        ?.pipe(
+          tap(() => {
+            // do real handling here
+            window.alert('DISCONNECT!')
+            this.onExit();
+          })
+        )
+        .subscribe()
+    );
+
+    this.subscriptions.push(
+      this.socketService
         .getObservable<ForwardMessageParams>(SocketServiceObservableTokens.Message)
         ?.pipe(
           tap((message) => {
-            // do real handling here
+            // todo
             console.log('msg', message)
           })
         )
@@ -125,8 +144,6 @@ export class Game extends Disposable {
         .getObservable<UpdatePlayerParams>(SocketServiceObservableTokens.Player)
         ?.pipe(
           tap((player) => {
-            // do real handling here
-            console.log('update', player);
             const { id } = player;
             const oldPlayer = self.playerMap.get(id);
             if (oldPlayer !== undefined) {
@@ -135,6 +152,20 @@ export class Game extends Disposable {
               const newPlayer = new Player(assign(player, { isCollider: true }), self.managers.assetManager);
               self.playerMap.set(id, newPlayer);
             }
+          })
+        )
+        .subscribe()
+    );
+
+    this.subscriptions.push(
+      this.socketService
+        .getObservable<ExitSceneParams>(SocketServiceObservableTokens.ExitSceneRoom)
+        ?.pipe(
+          tap((params) => {
+            const { id } = params;
+            const player = self.playerMap.get(id);
+            player!.dispose();
+            self.playerMap.delete(params.id);
           })
         )
         .subscribe()
