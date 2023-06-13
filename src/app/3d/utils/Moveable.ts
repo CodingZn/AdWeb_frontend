@@ -42,11 +42,14 @@ export class Moveable extends Renderable implements IMoveable {
     if (intersect.length > 0 && intersect[0].distance < (distance || DISTANCE)) {
 			const { object, distance } = intersect[0];
       return { 
+        ...intersect[0],
         distance: distance,
         object: map.get(object.uuid)!,
         target: object,
         colliders,
         more: intersect,
+        pos,
+        dir
        };
 		} else {
       return null
@@ -83,18 +86,21 @@ export class Moveable extends Renderable implements IMoveable {
     let x = - (right || 0) * velocity * dt;
     let z = (forward || 0) * velocity * dt;
     let y = 0;
-    const quaternion = object.quaternion.clone();
     
     if (x !== 0 || z !== 0) {
+      const quaternion = object.quaternion.clone();
       const distance = DISTANCE;
       const dirVec = new Vector3(x, 0, z).normalize().applyQuaternion(quaternion).normalize();
       const intersect = this.collide(renderables, dirVec, distance);
       if (intersect !== null) {
-        z = -sgn(z) *  (distance - intersect.distance) * (new Vector3(0, 0, z).normalize().applyQuaternion(quaternion).normalize().dot(dirVec));
-        x = -sgn(x) *  (distance - intersect.distance) * (new Vector3(x, 0, 0).normalize().applyQuaternion(quaternion).normalize().dot(dirVec));
+        // z = -sgn(z) *  (distance - intersect.distance) * (new Vector3(0, 0, z).normalize().applyQuaternion(quaternion).normalize().dot(dirVec));
+        // x = -sgn(x) *  (distance - intersect.distance) * (new Vector3(x, 0, 0).normalize().applyQuaternion(quaternion).normalize().dot(dirVec));
+        x = 0;
+        z = 0;
       }
+      else this.transform({ translateX: x, translateY: y, translateZ: z });
     }
-    this.transform({ translateX: x, translateY: y, translateZ: z });
+    
     return { x, y, z };
   }
 }

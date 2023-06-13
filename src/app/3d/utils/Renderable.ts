@@ -65,7 +65,7 @@ export const defaultRenderableParams: () => IRenderableState = () => ({
   isCollider: false,
 })
 
-export class Renderable extends Disposable {
+export abstract class Renderable extends Disposable {
   public object: Object3D;
   protected isCollider: boolean | ((child: Object3D) => boolean) = false; 
   private _name: string = '';
@@ -95,8 +95,8 @@ export class Renderable extends Disposable {
       rotation: { x: ex, y: ey, z: ez }, 
       visible 
     } = this.object;
-    const { name } = this;
-    return { name, x, y, z, visible, euler: { x: ex, y: ey, z: ez } };
+    const { name, isCollider } = this;
+    return { name, x, y, z, visible, euler: { x: ex, y: ey, z: ez }, isCollider };
   }
 
   public get parent() { return this.object.parent; }
@@ -109,14 +109,18 @@ export class Renderable extends Disposable {
     this.object.traverse(child => {
       if (
         (child as Mesh).isMesh &&
-        isCollider === true || 
-        (isFunction(isCollider) && isCollider(child))
+        (isCollider === true || 
+        (isFunction(isCollider) && isCollider(child)))
       ) { 
         colliders.add(child);
       }
     })
     return colliders;
   }
+
+  public focus() {};
+
+  public blur() {};
 
   public update(params: IRenderableParams) {
     return this._update(this.state, params);

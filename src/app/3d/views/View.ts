@@ -3,7 +3,6 @@ import { AnimationClip, Camera, PerspectiveCamera, Scene, Vector3 } from "three"
 import { LocalPlayer } from "../characters/LocalPlayer";
 import { AssetManager } from "../managers/AssetManager";
 import { ControlManager, IDestroyer } from "../managers/ControlManager";
-import { ObjectManager } from "../managers/ObjectManager";
 import { ICameraParams, PerspectiveManager } from "../managers/PerspectiveManager";
 import { SceneManager } from "../managers/SceneManager";
 import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
@@ -15,7 +14,6 @@ import { Disposable } from "../utils/Disposable";
 
 export interface IManagers {
   sceneManager: SceneManager,
-  objectManager: ObjectManager,
   perspectiveManager: PerspectiveManager,
   controlManager: ControlManager,
   assetManager: AssetManager,
@@ -63,7 +61,7 @@ export interface IViewProps {
 }
 
 const defaultViewOption = () => ({
-  perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK]
+  perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
 })
 
 export const ActionMap = new Map<string, AnimationClip>();
@@ -71,7 +69,6 @@ export const ActionMap = new Map<string, AnimationClip>();
 export abstract class View extends Disposable {
   protected _name: string; 
   protected sceneManager: SceneManager;
-  protected objectManager: ObjectManager;
   protected perspectiveManager: PerspectiveManager;
   protected controlManager: ControlManager;
   protected assetManager: AssetManager;
@@ -90,7 +87,6 @@ export abstract class View extends Disposable {
     const { 
       name,
       sceneManager,
-      objectManager, 
       assetManager, 
       perspectiveManager, 
       controlManager,
@@ -99,7 +95,6 @@ export abstract class View extends Disposable {
       perspectives
     } = assign(defaultViewOption(), options);
     this.sceneManager = sceneManager;
-    this.objectManager = objectManager;
     this.assetManager = assetManager;
     this.perspectiveManager = perspectiveManager;
     this.controlManager = controlManager;
@@ -117,7 +112,7 @@ export abstract class View extends Disposable {
     this.perspectiveManager.get(PerspectiveType.FIRST, {
       x: 0, y: EYE_HEIGHT, z: 0, 
       parent: localPlayer,
-      lookAt: (state) => (lockedLookAtHandler(state) || new Vector3(state.x, EYE_HEIGHT, state.z).addScaledVector(localPlayer!.direction as Vector3, 100)) })
+      lookAt: (state) => (lockedLookAtHandler(state) || new Vector3(state.x, EYE_HEIGHT, state.z).addScaledVector(localPlayer!.direction as Vector3, 1000)) })
     this.perspectiveManager.get(PerspectiveType.BACK, {
       x: 0, y: CHARACTER_HEIGHT * 1.8, z: -550, 
       parent: localPlayer, 

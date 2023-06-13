@@ -1,5 +1,6 @@
-import { DoubleSide, Material, Mesh, MeshBasicMaterial, Path, Shape, ShapeGeometry } from "three";
+import { Material, Mesh, MeshLambertMaterial, Path, Shape, ShapeGeometry } from "three";
 import { ISideParams, Side } from "./Box";
+import { cachedMaterial } from "./cache";
 
 export interface IWallParams extends ISideParams {
   windows?: IWindowParams[]
@@ -52,7 +53,8 @@ export class Wall extends Side {
       shape.holes.push(hole);
     }
     this.geometry = new ShapeGeometry(shape);
-    this.material = new MeshBasicMaterial({ color, side: DoubleSide });
+    const materialCtor = params.material || MeshLambertMaterial;
+    this.material = cachedMaterial(materialCtor, color);
     this.mesh = new Mesh(this.geometry, this.material);
     this.add(this.mesh);
   }

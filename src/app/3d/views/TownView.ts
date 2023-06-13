@@ -1,9 +1,10 @@
 
 import { assign, random } from "lodash";
-import { CubeTexture, Mesh, MeshBasicMaterial } from "three";
+import { CubeTexture } from "three";
 import { ProfileMap } from "../characters/Character";
 import { NPC } from "../characters/NPC";
 import { Renderable } from "../utils/Renderable";
+import { Town } from "../utils/Town";
 import { IViewOption, PerspectiveType, View } from "./View"
 
 export interface ITownViewOption extends IViewOption {}
@@ -22,18 +23,8 @@ export class TownView extends View {
       perspectives: [PerspectiveType.FIRST, PerspectiveType.BACK, PerspectiveType.FRONT]
     }));
     const self = this;
-    this.town = new Renderable({ name: 'town', isCollider: (child) => {
-      const mesh = child as Mesh;
-      if (mesh.isMesh && mesh.name.startsWith("proxy")) {
-        (mesh.material as MeshBasicMaterial).visible = false;
-        return true;
-      }
-      return false;
-    }})
-    this.assetManager.get('fbx/town.fbx')
-    .then(res => {
-      self.town.onLoad([res]);
-    })
+    this.town = new Town({ name: 'town' }, this.assetManager);
+    
     this.assetManager.get(
       [
         'px.jpg', 'nx.jpg',

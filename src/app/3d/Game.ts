@@ -1,14 +1,13 @@
 import { Clock } from "three";
 import { AssetManager } from "./managers/AssetManager";
 import { ControlManager } from "./managers/ControlManager";
-import { ObjectManager } from "./managers/ObjectManager";
 import { PerspectiveManager } from "./managers/PerspectiveManager";
 import { SceneManager } from "./managers/SceneManager"
 import { ProfileView, ProfileViewEvent } from "./views/ProfileView";
 import { TownView, TownViewEvent } from "./views/TownView";
 import { IManagers, IViewProps, View } from "./views/View";
 import { LocalPlayer } from "./characters/LocalPlayer";
-import { assign, values } from "lodash";
+import { assign } from "lodash";
 import { SocketService, SocketServiceObservableTokens } from "./socket/socket.service";
 import { StudyView, StudyViewEvent } from "./views/StudyView";
 import { UserSessionService } from "../user-session.service";
@@ -92,13 +91,11 @@ export class Game extends Disposable {
     const sceneManager = this._register(new SceneManager({ container }));
     const perspectiveManager = this._register(new PerspectiveManager({ container }));
     const assetManager = this._register(new AssetManager({ assetsPath: 'assets/' }));
-    const objectManager = this._register(new ObjectManager({ assetManager }));
     const controlManager = this._register(new ControlManager({ container }));
 
     this.managers = {
       sceneManager,
       perspectiveManager,
-      objectManager,
       assetManager,
       controlManager
     }

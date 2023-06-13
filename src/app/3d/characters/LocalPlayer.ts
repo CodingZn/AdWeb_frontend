@@ -2,6 +2,7 @@
 import { sgn } from "src/app/utils/function";
 import { Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
+import { Moveable } from "../utils/Moveable";
 import { IPosition, Renderable } from "../utils/Renderable";
 import { Text } from "../utils/Text";
 import { EYE_HEIGHT } from "./Character";
@@ -12,7 +13,7 @@ export interface ILocalPlayerParams extends IPlayerParams {}
 export class LocalPlayer extends Player {
   private aim: Renderable;
   private _direction: IPosition | null = null;
-  private targets: Renderable[] = [];
+  private focusedObject: Renderable | null = null;
 
   constructor(params: ILocalPlayerParams, assetManager: AssetManager) {
     super(params, assetManager);
@@ -42,18 +43,19 @@ export class LocalPlayer extends Player {
     this._direction = v;
   };
 
-  public checkFocus() {    
+  public checkFocus(colliders?: Iterable<Renderable>) {
     const dir = this.direction;
     let distance = 1000;
-    const intersect = this.collide(
-      this.targets,
+    let pos = this.object.position;
+    pos = new Vector3(pos.x, EYE_HEIGHT + pos.y, pos.z);
+    const intersect = Moveable.collide(
+      pos,
       dir,
+      Array.from(colliders || []).filter(v => v.uuid !== this.uuid),
       distance
     );
 
     // 调整准星
-    let pos = this.object.position;
-    pos = new Vector3(pos.x, EYE_HEIGHT + pos.y, pos.z)
     this.aim.object.lookAt(pos);
     const { x, y, z } = pos.addScaledVector(new Vector3(dir.x, dir.y, dir.z), 100);
     this.aim.update({ x, y, z });
@@ -62,10 +64,14 @@ export class LocalPlayer extends Player {
   }
 
   public override move(dt: number, colliders?: Iterable<Renderable>) {
-    this.targets.length = 0;
-    this.targets.push(...colliders || []);
     const res = super.move(dt, colliders);
-    this.checkFocus();
+    const prevFocus = this.focusedObject;
+    this.focusedObject = this.checkFocus(colliders);
+    // console.log(prevFocus, this.focusedObject);
+    if (prevFocus !== null && prevFocus !== this.focusedObject) {
+      prevFocus.blur();
+    }
+    if (this.focusedObject !== null) this.focusedObject.focus();
     return res;
   }
 }

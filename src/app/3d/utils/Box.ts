@@ -1,5 +1,6 @@
 import { Constructor } from "src/app/utils/constructor";
-import { DoubleSide, Mesh, MeshBasicMaterial, PlaneGeometry } from "three";
+import { Mesh, MeshLambertMaterial, PlaneGeometry } from "three";
+import { cachedGeometry, cachedMaterial } from "./cache";
 import { IPosition, IRenderableParams, ITransformType, Renderable } from "./Renderable";
 
 export interface IBoxParams extends IRenderableParams {
@@ -14,7 +15,8 @@ export interface IBoxParams extends IRenderableParams {
     right?: IBoxSideConfig;
     top?: IBoxSideConfig;
     bottom?: IBoxSideConfig;
-  }
+  },
+  material?: Constructor
 }
 
 interface IBoxSideConfig {
@@ -27,6 +29,8 @@ interface IBoxSideParams {
   color?: number,
   [key: string]: any
 }
+
+
 
 /**
  *   y (height)
@@ -84,7 +88,7 @@ export class Box extends Renderable {
   protected sideMap: Map<string, Side> = new Map();
   constructor(params: IBoxParams) {
     super(params);
-    const { width, height, depth } = params;
+    const { width, height, depth, material } = params;
     
     const CONSTANT_PARAMS = BOX_SIDES_CONSTANT_PARAMS(width, height, depth);
     for(const key in CONSTANT_PARAMS) {
@@ -103,7 +107,7 @@ export class Box extends Renderable {
         color = params.color
       }
       const { size, position, transform } = CONSTANT_PARAMS[key];
-      const side = new Ctor({ name: key, color, ...size, ...position, ...sideParams }); 
+      const side = new Ctor({ name: key, color, material, ...size, ...position, ...sideParams }); 
       if (transform !== undefined) side.transform(transform);
       this.sideMap.set(key, side);
       this.add(side);
@@ -115,6 +119,7 @@ export interface ISideParams extends IRenderableParams {
   width: number;
   height: number;
   color?: number;
+  material?: Constructor
 }
 
 /**
@@ -129,12 +134,14 @@ export interface ISideParams extends IRenderableParams {
  */
 export class Side extends Renderable {
   protected mesh: Mesh;
+
   constructor(params: ISideParams) {
     super(params);
     const { width, height } = params;
-    const geometry = new PlaneGeometry(width, height);
+    const geometry = cachedGeometry(PlaneGeometry, width, height)
     const color = params.color === undefined ? 0xffffff : params.color;
-    const material = new MeshBasicMaterial( { color, side: DoubleSide } );
+    const materialCtor = params.material || MeshLambertMaterial;
+    const material = cachedMaterial(materialCtor, color);
     this.mesh = new Mesh(geometry, material);
     this.mesh.position.set(width / 2, height / 2, 0);
     this.add(this.mesh);

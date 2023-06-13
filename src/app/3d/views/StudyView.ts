@@ -34,7 +34,7 @@ export class StudyView extends View {
     });
     // 教学楼
     this.teachingBuilding = new TeachingBuilding({
-      floors: 3,
+      floors: 2,
       isCollider: true
     });
     // debug
@@ -59,9 +59,7 @@ export class StudyView extends View {
     this.localPlayer!.update({ x: 100, y: 100, z: 100 });
   }
 
-  protected beforeDestoryed() {
-    
-  }
+  protected beforeDestoryed() {}
 
   public render(dt: number) {
     this.scene!.background = this.background;
@@ -70,7 +68,7 @@ export class StudyView extends View {
 
     for (const npc of this.npcs) this.add(npc);
 
-    for (const [id, player] of this.playerMap) this.add(player);
+    for (const [_, player] of this.playerMap) this.add(player);
 
     this.add(this.teachingBuilding);
 

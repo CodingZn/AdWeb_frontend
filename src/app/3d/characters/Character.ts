@@ -1,7 +1,8 @@
 import { assign, random } from "lodash";
-import {  AnimationClip, AnimationMixer, Object3D, Vector3 } from "three";
+import {  AnimationClip, AnimationMixer, CylinderGeometry, DoubleSide, Mesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { AnimateMoveable, IAnimateMoveableParams, IAnimateMoveableState } from "../utils/AnimateMoveable";
+import { cachedGeometry, cachedMaterial } from "../utils/cache";
 import { Moveable, RUNNING_VELOCITY, WALKING_VELOCITY, } from "../utils/Moveable";
 import { defaultRenderableParams, Renderable } from "../utils/Renderable";
 import { Text } from "../utils/Text";
@@ -61,6 +62,7 @@ export abstract class Character extends AnimateMoveable {
   protected characterObject: Object3D | null = null;
   protected _profileID: number = -1;
   protected nameText: Text;
+  protected outline: Mesh;
 
   constructor(params: ICharacterParams, assetManager: AssetManager) {
     super(assign({ actionMap: ActionMap }, params));
@@ -74,6 +76,16 @@ export abstract class Character extends AnimateMoveable {
     }, assetManager);
     this.add(this.nameText);
     this.update(assign(defaultCharacterState(), params));
+    this.outline = new Mesh(
+      cachedGeometry(CylinderGeometry, 0.5 * METER, 0.5 * METER, 1, 64),
+      cachedMaterial(MeshLambertMaterial, 0x0000ff)
+    );
+    const out = new Mesh(
+      cachedGeometry(CylinderGeometry, 1 * METER, 0.5 * METER, METER, 64),
+      new MeshLambertMaterial({ color: 0x3d4ff, transparent: true, opacity: 0.3, side: DoubleSide })
+    );
+    out.position.set(0, 0.5 * METER, 0);
+    this.outline.add(out);
   }
 
   public override get state(): ICharacterState {
@@ -108,6 +120,7 @@ export abstract class Character extends AnimateMoveable {
     }
     // 根据移动更新动作
     const { x, z } = super.move(dt, colliders);
+    let y = 0;
     let action = Actions.IDLE;
     if (x !== 0 || z !== 0) {
       if (this.action === Actions.RUNNING ||
@@ -123,14 +136,16 @@ export abstract class Character extends AnimateMoveable {
     this.object.getWorldPosition(pos);
     pos.y += STEP_OVER_HEIGHT;
     const intersect = Moveable.collide(pos, new Vector3(0, -1, 0), colliders, Infinity);
-    let y = 0;
+    y = 0;
     if (intersect !== null) {
       let targetY = pos.y - intersect.distance;
       const { y: curY } = this.state;
-      const newY = 0.8 * curY + 0.2 * targetY;
+      // const newY = 0.8 * curY + 0.2 * targetY;
+      const newY = targetY;
       y = newY - curY;
       this.update({ y: newY });
     }
+    
     return { x, y, z };
   }
 
@@ -162,5 +177,13 @@ export abstract class Character extends AnimateMoveable {
     }
     super.update(params);
     return this;
+  }
+
+  public override focus() {
+    this.add(this.outline);
+  }
+
+  public override blur() {
+    this.remove(this.outline);
   }
 }  
