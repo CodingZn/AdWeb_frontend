@@ -9,7 +9,7 @@ import { IMoveable, IMoveState, Moveable } from "../utils/Moveable";
 import { IRenderableState, Renderable } from "../utils/Renderable";
 import { Animatable, IAnimatable } from "../utils/Animatable";
 import { CHARACTER_HEIGHT, EYE_HEIGHT } from "../characters/Character";
-import { Player } from "../characters/Player";
+import { IPlayerState, Player } from "../characters/Player";
 import { Disposable } from "../utils/Disposable";
 
 export interface IManagers {
@@ -75,6 +75,7 @@ export abstract class View extends Disposable {
   protected scene: Scene | null = null;
   protected camera: Camera | null = null;
   protected localPlayer: LocalPlayer | null;
+  protected localPlayerState: IPlayerState | null = null;
   protected playerMap: Map<string, Player> = new Map();
   protected movables: Set<IMoveable> = new Set();
   protected animatables: Set<IAnimatable> = new Set();

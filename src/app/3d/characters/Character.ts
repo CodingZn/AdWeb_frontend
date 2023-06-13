@@ -1,10 +1,11 @@
 import { assign, random } from "lodash";
-import {  AnimationClip, AnimationMixer, CylinderGeometry, DoubleSide, Mesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, Vector3 } from "three";
+import {  AnimationClip, AnimationMixer, CylinderGeometry, DoubleSide, Mesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, Texture, Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { AnimateMoveable, IAnimateMoveableParams, IAnimateMoveableState } from "../utils/AnimateMoveable";
 import { cachedGeometry, cachedMaterial } from "../utils/cache";
 import { Moveable, RUNNING_VELOCITY, WALKING_VELOCITY, } from "../utils/Moveable";
 import { defaultRenderableParams, Renderable } from "../utils/Renderable";
+import { SpeechBubble } from "../utils/SpeechBubble";
 import { Text } from "../utils/Text";
 import { ActionMap, Actions } from "../views/View";
 
@@ -17,6 +18,7 @@ export interface ICharacterParams extends IAnimateMoveableParams {
   h?: number  // 朝向，弧度制
   pb?: number  // 仰俯 & 侧倾，弧度制
   action?: string,
+  nameColor?: number
 }
 
 export interface ICharacterState extends IAnimateMoveableState {
@@ -63,6 +65,8 @@ export abstract class Character extends AnimateMoveable {
   protected _profileID: number = -1;
   protected nameText: Text;
   protected outline: Mesh;
+  private speechBubble: SpeechBubble;
+  private speechTimer: any | null = null;
 
   constructor(params: ICharacterParams, assetManager: AssetManager) {
     super(assign({ actionMap: ActionMap }, params));
@@ -72,7 +76,7 @@ export abstract class Character extends AnimateMoveable {
       content: this.name, 
       x: - this.name.length * 10,
       y: CHARACTER_HEIGHT + 30,
-      color: random(0x0, 0xffffff)
+      color: params.nameColor || 0
     }, assetManager);
     this.add(this.nameText);
     this.update(assign(defaultCharacterState(), params));
@@ -86,6 +90,11 @@ export abstract class Character extends AnimateMoveable {
     );
     out.position.set(0, 0.5 * METER, 0);
     this.outline.add(out);
+    this.outline.name = 'outline'
+    this.speechBubble = new SpeechBubble(
+      { name: 'speechBubble' }, 
+      this.assetManager)
+    .update({ y: CHARACTER_HEIGHT + 0.5 * METER });
   }
 
   public override get state(): ICharacterState {
@@ -132,10 +141,16 @@ export abstract class Character extends AnimateMoveable {
     }
     this.action = action;
     // down
+    const filteredColliders = Array.from(colliders || []).filter(v => v.uuid !== this.uuid);
     const pos = new Vector3();
     this.object.getWorldPosition(pos);
     pos.y += STEP_OVER_HEIGHT;
-    const intersect = Moveable.collide(pos, new Vector3(0, -1, 0), colliders, Infinity);
+    const intersect = Moveable.collide(
+      pos, 
+      new Vector3(0, -1, 0), 
+      filteredColliders, 
+      Infinity
+      );
     y = 0;
     if (intersect !== null) {
       let targetY = pos.y - intersect.distance;
@@ -168,14 +183,15 @@ export abstract class Character extends AnimateMoveable {
         self.idle = res.animations[0];
         self.action = '';
         self.action = action;
+        super.update(this.state);
         return Promise.resolve(self.assetManager);
       })
       .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))
       .then((res) => self.onLoad([res]));
     } else {
       this.action = action;
+      super.update(params);
     }
-    super.update(params);
     return this;
   }
 
@@ -185,5 +201,57 @@ export abstract class Character extends AnimateMoveable {
 
   public override blur() {
     this.remove(this.outline);
+  }
+
+  /**
+   * 
+   * @param message 
+   * @param time 单位：秒
+   */
+  public say(message: string, time: number = 5) {
+    this.speechBubble.update({ message });
+    if (this.speechTimer !== null) {
+      clearTimeout(this.speechTimer);
+    } else {
+      this.add(this.speechBubble);
+    }
+    this.speechTimer = setTimeout(() => {
+      this.remove(this.speechBubble);
+      this.speechTimer = null;
+    }, time * 1000);
+  }
+
+  public override onLoad(resources: any[]) {
+    const self = this;
+    const objects: Object3D[] = [];
+    let texture: Texture | undefined;
+    resources.forEach((res: any) => {
+      if (res.isObject3D) {
+        objects.push(res);
+      } else if (res.isTexture) {
+        texture = res;
+      }
+    })
+
+    objects.forEach(object => {
+      self.add(object);
+    })
+
+    this.object.traverse((child: Object3D) => {
+      if ( 
+        (child as any).isMesh 
+        && child.name !== this.outline.name
+        && child.name !==this.speechBubble.name  
+      ) {
+        const mesh = child as Mesh;
+        const material = mesh.material as MeshBasicMaterial;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        if (texture !== undefined) {
+          material.map = texture;
+        }
+      }
+    });
+    return this;
   }
 }  

@@ -1,4 +1,5 @@
 
+import { assign } from "lodash";
 import { sgn } from "src/app/utils/function";
 import { Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
@@ -9,14 +10,13 @@ import { EYE_HEIGHT } from "./Character";
 import { IPlayerParams, Player } from "./Player";
 
 export interface ILocalPlayerParams extends IPlayerParams {}
-
 export class LocalPlayer extends Player {
   private aim: Renderable;
   private _direction: IPosition | null = null;
-  private focusedObject: Renderable | null = null;
+  public focusedObject: Renderable | null = null;
 
   constructor(params: ILocalPlayerParams, assetManager: AssetManager) {
-    super(params, assetManager);
+    super(assign(params, { nameColor: 0x00ff00 }), assetManager);
     this.aim = new Text({ content: '+', color: 0x0000ff, size: 5 }, assetManager);
   }
 

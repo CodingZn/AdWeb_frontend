@@ -56,7 +56,6 @@ export class StudyView extends View {
 
   protected mounted(props?: IViewProps) {
     this.controlManager.on('keyup', this.onKeyup.bind(this));
-    this.localPlayer!.update({ x: 100, y: 100, z: 100 });
   }
 
   protected beforeDestoryed() {}

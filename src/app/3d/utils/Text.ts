@@ -9,6 +9,7 @@ export interface ITextParams extends IRenderableParams {
   content?: string;
   size?: number;
   height?: number;
+  color?: number;
   font?: string;
   fontStyle?: string;
 }
@@ -18,6 +19,7 @@ export interface ITextState extends IRenderableState {
   size: number;
   font: string;
   height: number;
+  color: number;
   fontStyle: string;
 }
 
@@ -25,6 +27,7 @@ const defaultTextParams = () => ({
   content: '',
   size: 20,
   height: 1,
+  color: 0x000000,
   font: 'helvetiker',
   fontStyle: 'regular'
 })
@@ -36,6 +39,7 @@ export class Text extends Renderable {
   private content: string;
   private size: number;
   private height: number;
+  private color: number;
   private font: string;
   private fontStyle: string;
   private material: MeshBasicMaterial;
@@ -51,14 +55,15 @@ export class Text extends Renderable {
     this.content = content;
     this.size = size;
     this.height = height;
+    this.color = color;
     this.name = 'text';
     this.material = new MeshBasicMaterial({ color });
     this.loadFont();
   }
 
   public override get state(): ITextState {
-    const { content, font, fontStyle, size, height } = this;
-    return assign({ content, font, fontStyle, size, height }, super.state);
+    const { content, font, fontStyle, size, height, color } = this;
+    return assign({ content, font, fontStyle, size, height, color }, super.state);
   }
 
   public override update(params: ITextParams) {

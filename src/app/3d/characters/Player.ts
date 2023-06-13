@@ -26,10 +26,14 @@ export interface IPlayerState extends ICharacterState {
 }
 
 export class Player extends Character {
-  protected id: string;
+  protected _id: string;
+  
   constructor(params: IPlayerParams, assetManager: AssetManager) {
+    if (params.nameColor === undefined) {
+      params.nameColor = 0x1e90ff;
+    }
     super(params, assetManager);
-    this.id = params.id;
+    this._id = params.id;
   }
 
   public override update(params: IPlayerUpdateParams) {
@@ -38,6 +42,8 @@ export class Player extends Character {
     }
     return super.update(params);
   }
+
+  public get id() { return this._id; }
 
   public override get state(): IPlayerState {
     const { id } = this;

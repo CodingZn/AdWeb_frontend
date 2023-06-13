@@ -1,10 +1,29 @@
-export class Chat {
+import { Player } from "../characters/Player";
+import { ForwardMessageParams } from "../socket/model";
+import { Disposable } from "../utils/Disposable";
+
+export interface IMessage {
+  sender: Player;
+  receiver?: Player;
+  message: string;
+}
+
+export class Chat extends Disposable {
   public dom: HTMLElement;
   private input: HTMLElement;
   private btn: HTMLElement;
-  private onSend: ((msg: string) => any) | null = null;
+  private chatContainer: HTMLElement;
+  private target: HTMLElement;
+  private onSend: ((message: string, receiver?: Player) => any) | null = null;
+  private receiver: Player | undefined; 
+
+  public get mounted() { return this.dom.parentElement !== null; }
+
+  public mount(el: HTMLElement = document.body) { if (!this.mounted) el.appendChild(this.dom); }
+  public unmount() { this.mounted && this.dom.parentElement!.removeChild(this.dom); }
 
   constructor(onSend?: (msg: string) => any) {
+    super();
     if (onSend) this.onSend = onSend;
     this.dom = document.createElement("div");
     this.dom.style.cssText = `
@@ -12,7 +31,7 @@ export class Chat {
       display: flex;
       flex-direction: column;
       z-index: 9999;
-      padding: 24px 24px 0;
+      padding: 24px 24px 0 0;
       bottom: 0;
       left: 0;
       width: 640px;
@@ -30,19 +49,33 @@ export class Chat {
       flex-direction: column;
       flex-basis: 90%;
       overflow: overlay;
+      paddingLeft: 24px; 
     `
+    this.chatContainer = chatContainer;
     const inputContainer = document.createElement("div");
     inputContainer.style.cssText = `
       display: flex;
       flex-basis: 10%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: 0x1E90FF;
+      font-style: italic;
     `
+    const target = document.createElement("div");
+    target.innerHTML = 'To All';
+    target.style.cssText = `
+      padding: 13px 14px;
+      font-size: 16px;
+      font-weight: 700;
+    `;
+    this.target = target;
     const input = document.createElement("input");
     const inputCss = `
       flex-basis: 60%;
       flex: 1 1;
       outline-style: none;
       border: 1px solid #ccc;
-      border-radius: 3px;
       padding: 13px 14px;
       font-size: 16px;
       font-weight: 700;
@@ -62,14 +95,12 @@ export class Chat {
       color: #0099CC; 
       background: transparent; 
       border: 2px solid #0099CC;
-      border-radius: 6px; 
       border: none;
       color: white;
       padding: 16px 32px;
       text-align: center;
       display: inline-block;
       font-size: 16px;
-      margin: 4px 2px;
       -webkit-transition-duration: 0.4s; /* Safari */
       transition-duration: 0.4s;
       cursor: pointer;
@@ -90,11 +121,29 @@ export class Chat {
     btn.onmouseleave = () => btn.style.cssText = sendCss;
     btn.onclick = () => this.send();
     this.btn = btn;
+    inputContainer.appendChild(target);
     inputContainer.appendChild(input);
     inputContainer.appendChild(btn);
     
     this.dom.appendChild(chatContainer);
     this.dom.appendChild(inputContainer);
+
+    this._register({
+      dispose: () => {
+        if (this.dom.parentElement) {
+          this.dom.parentElement.removeChild(this.dom);
+        }
+      }
+    })
+  }
+
+  public set to(v: Player | undefined) {
+    if (v === undefined) {
+      this.target.innerHTML = `to All`;
+    } else {
+      this.target.innerHTML = `to ${v.name}`;
+    }
+    this.receiver = v;
   }
 
   public get value() {
@@ -102,7 +151,34 @@ export class Chat {
   }
 
   public send() {
-    this.onSend && this.onSend(this.value);
+    this.onSend && this.onSend(this.value, this.receiver);
     (this.input as any).value = '';
+  }
+
+  public onReceive(msgObj: IMessage, sendBySelf: boolean = false, sendToSelf: boolean = false) {
+    const { message, sender, receiver } = msgObj;
+    const msgContainer = document.createElement("div");
+    msgContainer.style.cssText = `
+      display: flex;
+    `;
+    const left = document.createElement("div");
+    left.style.cssText = `
+      width: 300px;
+    `;
+    const d = new Date();
+    left.innerHTML = `
+      <span style="color: #0; marginRight: 10px">${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}</span>
+      <span style="color: ${sendBySelf ? '#00ff00' : '#1e90ff'}">${sender.name}</span>
+      <span style="color: #0">to</span>
+      <span style="color: ${receiver?.name ? sendToSelf ? '#00ff00' : '#1e90ff' : '#ff0000' }">${receiver?.name || 'All'}</span>
+    `;
+    const msg = document.createElement("div");
+    msg.style.cssText = `
+      flex: 1;
+    `;
+    msg.innerHTML = message;
+    msgContainer.appendChild(left);
+    msgContainer.appendChild(msg);
+    this.chatContainer.appendChild(msgContainer);
   }
 }

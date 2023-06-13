@@ -3,15 +3,13 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import { Camera, Vector3 } from "three";
 import { IMoveState } from "../utils/Moveable";
 import { Disposable, IEventDispatcher } from "../utils/Disposable";
-import { Chat } from "../lib/Chat";
-import { Player } from "../characters/Player";
-
+import { assign } from "lodash";
 
 export interface IControlManagerOption {
   container?: HTMLElement,
   showJoyStick?: Boolean,
   controlPointer?: Boolean,
-  camera?: Camera
+  camera?: Camera,
 }
 
 export const EventType = {
@@ -53,21 +51,16 @@ export class ControlManager extends Disposable {
   private pointerLockControls: PointerLockControls | null = null;
   private destoryers: IDestroyer[] = [];
   private customDestoryers: IDestroyer[] = [];
-  private _chat: Chat;
-  private _isChat: boolean = false;
 
   constructor(options: IControlManagerOption) {
     super();
-    this.options = Object.assign(defaultControlManagerOptions(), options);
+    this.options = assign(defaultControlManagerOptions(), options);
     const self = this;
     this._register({
       dispose: () => {
         if (self.mounted) { self.unmount(); }
       }
     })
-    this._chat = new Chat((msg: string) => {
-      console.log('send', msg);
-    });
   }
 
   public get locked() { return this.pointerLockControls?.isLocked || false; }
@@ -148,10 +141,6 @@ export class ControlManager extends Disposable {
     return this;
   }
 
-  public chat(target?: Player) {
-    this._onChat(target);
-  }
-
   private _lock() {
     this.pointerLockControls?.lock();
   }
@@ -204,8 +193,6 @@ export class ControlManager extends Disposable {
         moveState.up = 0; break;
       case 'q':
         this._onSwitchPerpective(); break;
-      case 'c':
-        this._onChat(); break;
     }
     this._onMove();
   }
@@ -262,15 +249,5 @@ export class ControlManager extends Disposable {
     if (this.joyStick !== null) {
       this.joyStick.mount();
     }
-  }
-
-  private _onChat(target?: Player) {
-    const { container } = this.options;
-    if (this._isChat === false) {
-      container!.appendChild(this._chat.dom);
-    } else {
-      container!.removeChild(this._chat.dom);
-    }
-    this._isChat = !this._isChat;
   }
 }

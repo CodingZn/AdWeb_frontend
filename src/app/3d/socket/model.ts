@@ -2,7 +2,7 @@ type UserID = string;
 
 export type ForwardMessageParams ={
   sender: UserID;
-  receiver: UserID;
+  receiver?: UserID;
   message: string;
 };
 

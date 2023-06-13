@@ -51,7 +51,6 @@ export class TownView extends View {
   }
 
   public mounted() {
-    this.localPlayer!.update({ x: 0, y: 0, z: -1500 });
     this.controlManager.on('keyup', this.onKeyup.bind(this));
   }
 

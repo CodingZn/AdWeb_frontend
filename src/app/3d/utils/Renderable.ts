@@ -19,7 +19,6 @@ export interface IRenderableParams {
   y?: number, 
   z?: number,
   name?: string,
-  color?: number, // hex number
   visible?: boolean,
   euler?: {
     x?: number, 

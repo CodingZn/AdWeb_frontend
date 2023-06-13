@@ -13,8 +13,9 @@ import { StudyView, StudyViewEvent } from "./views/StudyView";
 import { UserSessionService } from "../user-session.service";
 import { Subscription, tap } from "rxjs";
 import { ExitSceneParams, ForwardMessageParams, UpdatePlayerParams } from "./socket/model";
-import { Player } from "./characters/Player";
-import { Disposable } from "./utils/Disposable";
+import { IPlayerUpdateParams, Player } from "./characters/Player";
+import { addDisposableEventListener, Disposable } from "./utils/Disposable";
+import { Chat } from "./lib/Chat";
 
 interface IGameOption {
   container?: HTMLElement,
@@ -34,12 +35,14 @@ export class Game extends Disposable {
   private activeView: View | null = null;
   private managers!: IManagers;
   private localPlayer!: LocalPlayer;
+  private localPlayerStateMap: Map<string, IPlayerUpdateParams> = new Map();
   private playerMap: Map<string, Player> = new Map();
   private viewMap: Map<string, View> = new Map();
   private prevView: View | null = null;
   private socketService!: SocketService;
   private userSessionService!: UserSessionService;
   private subscriptions: Subscription[] = [];
+  private chat!: Chat;
   private onExit: () => any;
   
   private clock: Clock = new Clock();
@@ -73,8 +76,14 @@ export class Game extends Disposable {
     // 切换场景，清空当前玩家
     this.playerMap.forEach(player => player.destory());
     this.playerMap.clear();
+    // 保存当前玩家状态
+    if (this.prevView !== null) {
+      this.localPlayerStateMap.set(this.prevView.name, this.localPlayer.state);
+    }
     if (view !== undefined) {
       this.activeView = view.mount(props);
+      const state = this.localPlayerStateMap.get(name);
+      this.localPlayer.update(state || {});
     } else {
       console.warn('No such view: ', name);
     }
@@ -131,10 +140,7 @@ export class Game extends Disposable {
       this.socketService
         .getObservable<ForwardMessageParams>(SocketServiceObservableTokens.Message)
         ?.pipe(
-          tap((message) => {
-            // todo
-            console.log('msg', message)
-          })
+          tap((msg) => this.onReceive(msg))
         )
         .subscribe()
     );
@@ -177,6 +183,38 @@ export class Game extends Disposable {
         self.subscriptions.forEach((subscription) => subscription.unsubscribe());
       }
     })
+
+    this.chat = this._register(
+      new Chat((message: string, receiver?: Player) => {
+        const msg = {
+          message,
+          sender: this.localPlayer.id,
+          receiver: receiver?.id
+        };
+        this.socketService.sendMessage(msg);
+        this.onReceive(msg);
+      })
+    );
+    this._register(addDisposableEventListener(this.container, 'mousedown', () => {
+      const player = this.localPlayer.focusedObject
+      if (player instanceof Player) {
+        this.chat.to = player;
+        this.chat.mount(this.container);
+        this.managers.controlManager.unlock();
+      } else {
+        this.chat.to = undefined;
+      }
+    }))
+    this._register(addDisposableEventListener(window, 'keyup', (e) => {
+      if ((e as KeyboardEvent).key === 'c') {
+        if (this.chat.mounted) {
+          this.chat.unmount();
+        } else {
+          this.chat.mount(this.container);
+          this.managers.controlManager.unlock();
+        }
+      }
+    }))
   }
 
   private initPlayer() {
@@ -199,12 +237,13 @@ export class Game extends Disposable {
     const { localPlayer, playerMap } = this;
     const self = this;
     profileView.on(ProfileViewEvent.save, (profileID: number) => {
-      localPlayer.update({ profileID });
+      self.localPlayerStateMap.forEach(state => state.profileID = profileID);
       self.switch(this.prevView!.name);
     });
     profileView.on(ProfileViewEvent.exit, () => {
       self.switch(townView.name);
     })
+    this.localPlayerStateMap.set(profileView.name, {});
     this.viewMap.set(profileView.name, profileView);
 
     const townView = new TownView({ 
@@ -213,12 +252,13 @@ export class Game extends Disposable {
       playerMap,
       ...this.managers 
     });
-    townView.on(TownViewEvent.profile, (profileID: number) => {
-      self.switch(profileView.name, { profileID });
+    townView.on(TownViewEvent.profile, () => {
+      self.switch(profileView.name, { profileID: localPlayer.profileID });
     })
     townView.on(TownViewEvent.learn, () => {
       self.switch(studyView.name);
     })
+    this.localPlayerStateMap.set(townView.name, { x: 0, y: 0, z: -1500 });
     this.viewMap.set(townView.name, townView);
 
     const studyView = new StudyView({ 
@@ -228,13 +268,35 @@ export class Game extends Disposable {
       ...this.managers 
     });
     studyView.on(StudyViewEvent.profile, () => {
-      self.switch(profileView.name);
+      self.switch(profileView.name, { profileID: localPlayer.profileID });
     })
     studyView.on(StudyViewEvent.town, () => {
       self.switch(townView.name);
     })
+    this.localPlayerStateMap.set(studyView.name, { x: 100, y: 100, z: 100 });
     this.viewMap.set(studyView.name, studyView);
 
     this.switch(studyView.name);
+  }
+
+  private getPlayer(id: string | undefined) {
+    if (id === undefined) return undefined;
+    let player = this.playerMap.get(id);
+    if (player === undefined && id === this.localPlayer.id) {
+      player = this.localPlayer;
+    }
+    return player
+  }
+
+  private onReceive(msg: ForwardMessageParams) {
+    const { message } = msg;
+    const sender = this.getPlayer(msg.sender)!;
+    const receiver = this.getPlayer(msg.receiver);
+    this.chat.onReceive({
+      message,
+      sender,
+      receiver
+    }, sender === this.localPlayer, receiver === this.localPlayer);
+    sender.say(msg.message);
   }
 }
