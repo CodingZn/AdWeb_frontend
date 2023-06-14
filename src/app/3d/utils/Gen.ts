@@ -146,8 +146,9 @@ export class Gen {
     let url = baseUrl;
     let params = new HttpParams().set("times", times).set("miu", miu).set("sigma", sigma);
 
-    // console.log(params);
-    if (!type){
+    console.log(type);
+    console.log(params);
+    if (type=="0"){
       url += "/distribution/normalXY";
       http.get(url, {params: params}).subscribe(
         data=>{
@@ -155,7 +156,7 @@ export class Gen {
           this.onSend(data);
         },
         error => {
-          console.log(error)
+          window.alert("请一分钟后再试！")
         }
       );
     }
@@ -167,8 +168,7 @@ export class Gen {
           this.onSend(data);
         },
         error => {
-
-          console.log(error)
+          window.alert("请一分钟后再试！")
         }
       );
     }
