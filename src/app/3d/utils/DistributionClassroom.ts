@@ -13,6 +13,8 @@ import {
   Object3D,
   Vector3
 } from "three";
+import {Light} from "./Light";
+import {TEACHING_BUILDING_DEPTH, TEACHING_BUILDING_FLOOR_HEIGHT, TEACHING_BUILDING_WIDTH} from "./TeachingBuilding";
 
 const DELTA = 5;
 
@@ -32,6 +34,7 @@ const CUBE_BASE_POS = new Vector3((CLASSROOM_WIDTH-BORDER_INNER_LENGTH)/2 + CUBE
 
 export class DistributionClassroom extends Renderable {
   private box: Box;
+  private light: any;
   private _colliders: Set<Object3D> = new Set();
   // private desks: Desk[][];
   // private platform: Mesh;
@@ -135,7 +138,10 @@ export class DistributionClassroom extends Renderable {
     for (const border of borders) {
       this.box.add(border);
     }
-
+    this.light = new Light({
+      intensity: 1
+    });
+    this.add(this.light)
 
     this.generateCubes(DistributionClassroom.generateSampleDistribution());
   }
