@@ -11,7 +11,8 @@ export interface ILearnViewOption extends IViewOption {
 
 export enum StudyViewEvent {
   profile,
-  town
+  town,
+  distribution
 }
 
 export class StudyView extends View {
@@ -62,7 +63,7 @@ export class StudyView extends View {
 
   public render(dt: number) {
     this.scene!.background = this.background;
-    
+
     this.add(this.localPlayer!);
 
     for (const npc of this.npcs) this.add(npc);
@@ -78,10 +79,12 @@ export class StudyView extends View {
 
   private onKeyup(e: Event) {
     switch((e as KeyboardEvent).key) {
-      case 'p': 
+      case 'p':
         this.emit(StudyViewEvent.profile, this.localPlayer!.profileID); break;
       case 't':
         this.emit(StudyViewEvent.town); break;
+      case 'i':
+        this.emit(StudyViewEvent.distribution); break;
     }
   }
 }
