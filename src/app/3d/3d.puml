@@ -13,34 +13,24 @@ class Game {
 
 View --o Game
 
-' abstract class View { 
-'   +localPlayer: LocalPlayer
-'   +playerMap: Map<string, Player>
-'   +nps: NPC[]; 
-'   +mount()
-'   +unmount()
-'   {abstract} #mounted()
-'   {abstract} #beforeDestory()
-'   +render(dt)
-'   +on()
-'   +off()
-'   +onMove(state: { right, forward })
-'   #emit()
-' }
-' SceneManager --o View
-' PerspectiveManager --o View
-' ControlManager --o View
-' AssetManager --o View
+abstract class View { 
+  +localPlayer: LocalPlayer
+  +playerMap: Map<string, Player>
+  +nps: NPC[]; 
+  +mount()
+  +unmount()
+  {abstract} #mounted()
+  {abstract} #beforeDestory()
+  +render(dt)
+  +on()
+  +off()
+  +onMove(state: { right, forward })
+  #emit()
+}
 
 class ProfileView {
   +profileID
 }
-ProfileView --> View
-' Moveable --o View
-' Animatable --o View
-' LocalPlayer --o View
-' Player --o View
-' NPC --o View
 
 class TownView {
   -town
@@ -81,93 +71,103 @@ class UserSessionService {
 }
 UserSessionService --o Game
 
-' class SceneManager {
-'   +add(renderable: Renderable)
-'   +remove(renderable)
-'   +switch(sceneName, { background, ambient, ... })
-' }
+class SceneManager {
+  +add(renderable: Renderable)
+  +remove(renderable)
+  +switch(sceneName, { background, ambient, ... })
+}
 
-' class AssetManager {
-'   +get(url): Promise<any> | Promise<any[]>
-' }
+class AssetManager {
+  +get(url): Promise<any> | Promise<any[]>
+}
 
-' class PerspectiveManager {
-'   +camera
-'   +switch(type, { x, y, z, targetX, targetY, targetZ })
-' }
+class PerspectiveManager {
+  +camera
+  +switch(type, { x, y, z, targetX, targetY, targetZ })
+}
 
-' class ControlManager {
-'   +update()
-'   +mount()
-'   +unmount()
-'   +lock()
-'   +unlock()
-'   +on(camera)
-'   +off()
-' }
+class ControlManager {
+  +update()
+  +mount()
+  +unmount()
+  +lock()
+  +unlock()
+  +on(camera)
+  +off()
+}
+SceneManager --o View
+PerspectiveManager --o View
+ControlManager --o View
+AssetManager --o View
 
-' abstract class Renderable {
-'   #object: Object3D
-'   +state
-'   +colliders: Object3D[]
-'   +update({ x, y, z, color, width, height, depth, transform, ... })
-'   +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
-'   +add(renderable: Renderable)
-'   +remove(renderable: Renderable)
-'   +onload(resources: any[])
-'   +focus()
-'   +blur()
-' }
+abstract class Renderable {
+  #object: Object3D
+  +state
+  +colliders: Object3D[]
+  +update({ x, y, z, color, width, height, depth, transform, ... })
+  +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
+  +add(renderable: Renderable)
+  +remove(renderable: Renderable)
+  +onload(resources: any[])
+  +focus()
+  +blur()
+}
 
-' abstract class Moveable {
-'   +velocity
+abstract class Moveable {
+  +velocity
   
-'   {static} +collide(pos, dir, colliders, distance)
-'   +collide(dir, colliders, distance)
-'   onMove(state: { forward, right })
-'   move(dt: number)
+  {static} +collide(pos, dir, colliders, distance)
+  +collide(dir, colliders, distance)
+  onMove(state: { forward, right })
+  move(dt: number)
   
-' }
-' Moveable --> Renderable
+}
+Moveable --> Renderable
 
 
-' abstract class Animatable {
-'   +action
-'   +actionDuration
-'   +setAction(v)
-'   +animate(dt: number)
-' }
-' Animatable --> Renderable
+abstract class Animatable {
+  +action
+  +actionDuration
+  +setAction(v)
+  +animate(dt: number)
+}
+Animatable --> Renderable
 
-' abstract class AnimateMoveable {}
-' AnimateMoveable --> Animatable
-' AnimateMoveable --> Moveable
+abstract class AnimateMoveable {}
+AnimateMoveable --> Animatable
+AnimateMoveable --> Moveable
 
-' abstract class Character {
-'   +say(message)
-' }
-' Character --> AnimateMoveable
+abstract class Character {
+  +say(message)
+}
+Character --> AnimateMoveable
 
-' class Player {
-'   +toSocket()
-'   +fromSocket(socket)
-' }
-' Player --> Character
+class Player {
+  +toSocket()
+  +fromSocket(socket)
+}
+Player --> Character
 
-' class LocalPlayer {
-'   +checkFocus(targets)
-' }
-' LocalPlayer --> Player
+class LocalPlayer {
+  +checkFocus(targets)
+}
+LocalPlayer --> Player
 
-' class NPC {
-'   +autoMove(dt: number)
-' }
-' NPC --> Character
+class NPC {
+  +autoMove(dt: number)
+}
+NPC --> Character
+ProfileView --> View
+Moveable --o View
+Animatable --o View
+LocalPlayer --o View
+Player --o View
+NPC --o View
 
-' class Disposable {
-'   +_register(disposable: Disposable)
-'   +dispose()
-' }
+class Disposable {
+  +_register(disposable: Disposable)
+  +dispose()
+}
 
 
 
