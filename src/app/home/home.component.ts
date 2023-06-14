@@ -16,8 +16,8 @@ export class HomeComponent {
     this.userSessionService.logout();
     this.router.navigateByUrl('user-login')
   }
-  to3D(){
-    this.router.navigateByUrl('3d-test');
+  toGame(){
+    this.router.navigateByUrl('game');
   }
   toProfile(){
     this.router.navigateByUrl('profile');

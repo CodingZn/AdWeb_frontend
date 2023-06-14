@@ -11,7 +11,7 @@ import {SocketTestComponent} from "./3d/socket/socket-test/socket-test.component
 const routes: Routes = [
   { path: 'user-login', loadComponent: () => import('./user-login/user-login-page/user-login-page.component').then((mod) => mod.UserLoginPageComponent)},
   { path: 'user-register', loadComponent: () => import('./user-register/user-register-page/user-register-page.component').then((mod) => mod.UserRegisterPageComponent)},
-  { path: '3d-test', loadComponent: () => import('./3d/test/test.component').then((mod) => mod.TestComponent)},
+  { path: 'game', loadComponent: () => import('./3d/test/test.component').then((mod) => mod.TestComponent)},
   { path: 'home', component: HomeComponent},
   { path: 'user', component: UserinfoComponent},
   { path: 'profile', component: UserProfileComponent},

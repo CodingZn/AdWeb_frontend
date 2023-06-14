@@ -4,6 +4,8 @@ import { LoginResponse } from './http/login-response.model';
 import { LoginRequest } from './http/login-request.model';
 import { Subject } from 'rxjs';
 import { LoginAPI } from './http/login-api';
+import { ChooseProfileApi, GetUserinfoApi } from './http/userinfo-api';
+import { ChooseProfileRequest } from './http/userinfo.model';
 
 // local status for the user session service
 enum SessionStatus {
@@ -42,6 +44,7 @@ const checkToken = (token: string) => {
 export class UserSessionService {
   private token: String | null = null;
   private tokenLocalStorageID = 'JWT';
+  private profileID: number = 0;
 
   private tokenInfo: TokenPayload | null = null;
 
@@ -58,12 +61,12 @@ export class UserSessionService {
         this.tokenInfo = result;
         this.token = token;
         this.status = SessionStatus.Ready;
+        this.getUserInfo();
       }
       else{
         this.cleanToken();
       }
     }
-
   }
 
   private saveToken(token: string) {
@@ -102,7 +105,10 @@ export class UserSessionService {
     new LoginAPI(this.httpClient)
       .createObservable(loginRequest)
       .subscribe({
-        next: (res) => loginSubject.next(res),
+        next: (res) => {
+          this.getUserInfo();
+          loginSubject.next(res)
+        },
         error: (err) => loginSubject.error(err),
         complete: () => loginSubject.complete(),
       });
@@ -113,6 +119,36 @@ export class UserSessionService {
 
   logout() {
     this.cleanToken();
+  }
+
+  getUserInfo() {
+    if (!this.tokenInfo?.id) return; 
+    new GetUserinfoApi(this.httpClient, this.tokenInfo.id.toString())
+      .createObservable({}, { headers: this.getAuthHeaders() },)
+      .subscribe({
+        next: (res) => {
+          this.profileID = res.profileID;
+        },
+        error:(err => {
+          console.log(err)
+          window.alert(err.error.message)
+        })
+      })
+  }
+
+  updateProfile(profileID: number) {
+    if (!this.tokenInfo?.id) return;
+    let req: ChooseProfileRequest = { profileID }; 
+    new ChooseProfileApi(this.httpClient, this.tokenInfo.id.toString())
+      .createObservable(req, { headers: this.getAuthHeaders() })
+      .subscribe({
+        next: (res)=>{
+          this.profileID = profileID;
+        },
+        error: (err)=>{
+          console.error(err)
+        }
+      })
   }
 
   getIsReady() {
@@ -130,5 +166,9 @@ export class UserSessionService {
 
   getTokenInfo(){
     return this.tokenInfo;
+  }
+
+  getProfileID(){
+    return this.profileID;
   }
 }

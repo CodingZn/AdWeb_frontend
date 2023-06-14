@@ -206,12 +206,17 @@ export class Game extends Disposable {
       }
     }))
     this._register(addDisposableEventListener(window, 'keyup', (e) => {
-      if ((e as KeyboardEvent).key === 'c') {
+      const key = (e as KeyboardEvent).key
+      if (key === 'c') {
         if (this.chat.mounted) {
           this.chat.unmount();
         } else {
           this.chat.mount(this.container);
           this.managers.controlManager.unlock();
+        }
+      } else if (key === 'Escape' && !this.managers.controlManager.locked) {
+        if (window.confirm('确认退出游戏？')) {
+          this.onExit();
         }
       }
     }))
@@ -219,11 +224,12 @@ export class Game extends Disposable {
 
   private initPlayer() {
     const { id, username, exp } = this.userSessionService.getTokenInfo()!;
+    const profileID = this.userSessionService.getProfileID();
     this.localPlayer = new LocalPlayer(
       { 
         id: id + '',
         name: username,
-        profileID: 0,
+        profileID,
         isCollider: true
       }, 
       this.managers.assetManager);
@@ -237,6 +243,7 @@ export class Game extends Disposable {
     const { localPlayer, playerMap } = this;
     const self = this;
     profileView.on(ProfileViewEvent.save, (profileID: number) => {
+      self.userSessionService.updateProfile(profileID);
       self.localPlayerStateMap.forEach(state => state.profileID = profileID);
       self.switch(this.prevView!.name);
     });
