@@ -5,7 +5,7 @@ import {UserSessionService} from "../../user-session.service";
 const http = new HttpClient(new HttpXhrBackend({
   build: () => new XMLHttpRequest()
 }));
-const baseUrl = "http://localhost:8080";
+const baseUrl = "http://124.221.101.230:8080";
 export class Gen {
   public dom: HTMLElement;
   private select_type: HTMLElement;

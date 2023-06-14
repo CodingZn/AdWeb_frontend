@@ -6,7 +6,7 @@ import {HttpClient, HttpParams, HttpXhrBackend} from "@angular/common/http";
 const http = new HttpClient(new HttpXhrBackend({
   build: () => new XMLHttpRequest()
 }));
-const baseUrl = "http://localhost:8080";
+const baseUrl = "http://124.221.101.230:8080";
 
 export enum DistributionEvent {
   profile,
