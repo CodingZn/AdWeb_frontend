@@ -31,7 +31,7 @@ export class Gen {
       bottom: 0;
       left: 0;
       width: 100%;
-      height: 320px;
+      height: 200px;
       background: rgba(255, 255, 255, 0.2);
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
@@ -130,7 +130,26 @@ export class Gen {
     inputContainer.appendChild(btn);
     //
     // this.dom.appendChild(chatContainer);
+    const readme = document.createElement("p");
+    readme.innerText = `欢迎使用随机分布产生器，其一分钟内只能产生一次，机会在0秒时刷新。`;
+    this.dom.appendChild(readme);
+
+    const time = document.createElement("p");
+    time.innerText = new Date().toTimeString();
+
+    setInterval(()=>{
+      let now = new Date()
+      this.dom.removeChild(time);
+      time.innerText = now.toTimeString();
+      if(now.getSeconds()==0){
+        time.style.color = "red";
+      }else{
+        time.style.color = "black";
+      }
+      this.dom.appendChild(time);
+      }, 1000)
     this.dom.appendChild(inputContainer);
+    this.dom.appendChild(time);
   }
 
   public get value() {

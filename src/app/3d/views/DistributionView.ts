@@ -1,7 +1,12 @@
 import {IViewOption, IViewProps, View} from "./View";
 import {CubeTexture} from "three";
 import {DistributionClassroom} from "../utils/DistributionClassroom";
+import {HttpClient, HttpParams, HttpXhrBackend} from "@angular/common/http";
 
+const http = new HttpClient(new HttpXhrBackend({
+  build: () => new XMLHttpRequest()
+}));
+const baseUrl = "http://localhost:8080";
 
 export enum DistributionEvent {
   profile,
@@ -10,6 +15,7 @@ export enum DistributionEvent {
 
 
 export class DistributionView extends View{
+  private now: number = 0;
   private background: CubeTexture | null = null;
   private distClassroom: DistributionClassroom;
 
@@ -28,6 +34,7 @@ export class DistributionView extends View{
 
     this.distClassroom = new DistributionClassroom({});
 
+    setInterval(()=>{this.checkChange()}, 1000);
   }
 
   protected beforeDestoryed(): any {
@@ -63,5 +70,16 @@ export class DistributionView extends View{
       case 'g':
         this.controlManager._onGen((data)=>this.distClassroom.generateCubes(data));
     }
+  }
+
+  public checkChange(){
+    let params = new HttpParams().set("now", this.now);
+    http.get(baseUrl+"/distribution/check", {params: params})
+      .subscribe((data:any)=>{
+        if (data != null){
+          this.now = data.now;
+          this.distClassroom.generateCubes(data.data);
+        }
+      })
   }
 }
