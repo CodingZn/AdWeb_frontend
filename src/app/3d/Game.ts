@@ -15,6 +15,7 @@ import { Subscription, tap } from "rxjs";
 import { ExitSceneParams, ForwardMessageParams, UpdatePlayerParams } from "./socket/model";
 import { Player } from "./characters/Player";
 import { Disposable } from "./utils/Disposable";
+import {DistributionEvent, DistributionView} from "./views/DistributionView";
 
 interface IGameOption {
   container?: HTMLElement,
@@ -41,9 +42,9 @@ export class Game extends Disposable {
   private userSessionService!: UserSessionService;
   private subscriptions: Subscription[] = [];
   private onExit: () => any;
-  
+
   private clock: Clock = new Clock();
-  
+
   constructor(option: IGameOption) {
     super();
     const { container, userSessionService, socketService, onExit } = assign(defaultOption(), option);
@@ -92,8 +93,8 @@ export class Game extends Disposable {
   }
 
   private initManagers() {
-    const { container } = this; 
-    
+    const { container } = this;
+
     const sceneManager = this._register(new SceneManager({ container }));
     const perspectiveManager = this._register(new PerspectiveManager({ container }));
     const assetManager = this._register(new AssetManager({ assetsPath: 'assets/' }));
@@ -182,17 +183,17 @@ export class Game extends Disposable {
   private initPlayer() {
     const { id, username, exp } = this.userSessionService.getTokenInfo()!;
     this.localPlayer = new LocalPlayer(
-      { 
+      {
         id: id + '',
         name: username,
         profileID: 0,
         isCollider: true
-      }, 
+      },
       this.managers.assetManager);
   }
 
   private initViews() {
-    const profileView = new ProfileView({ 
+    const profileView = new ProfileView({
       name: 'profile',
       ...this.managers
     });
@@ -207,11 +208,11 @@ export class Game extends Disposable {
     })
     this.viewMap.set(profileView.name, profileView);
 
-    const townView = new TownView({ 
-      name: 'town', 
+    const townView = new TownView({
+      name: 'town',
       localPlayer,
       playerMap,
-      ...this.managers 
+      ...this.managers
     });
     townView.on(TownViewEvent.profile, (profileID: number) => {
       self.switch(profileView.name, { profileID });
@@ -221,11 +222,11 @@ export class Game extends Disposable {
     })
     this.viewMap.set(townView.name, townView);
 
-    const studyView = new StudyView({ 
-      name: 'study', 
+    const studyView = new StudyView({
+      name: 'study',
       localPlayer,
       playerMap,
-      ...this.managers 
+      ...this.managers
     });
     studyView.on(StudyViewEvent.profile, () => {
       self.switch(profileView.name);
@@ -233,7 +234,25 @@ export class Game extends Disposable {
     studyView.on(StudyViewEvent.town, () => {
       self.switch(townView.name);
     })
+    studyView.on(StudyViewEvent.distribution, () => {
+      self.switch(distributionView.name);
+    })
     this.viewMap.set(studyView.name, studyView);
+
+
+    const distributionView = new DistributionView({
+      name: 'distribution',
+      localPlayer,
+      playerMap,
+      ...this.managers
+    });
+    distributionView.on(DistributionEvent.profile, () => {
+      self.switch(profileView.name);
+    })
+    distributionView.on(DistributionEvent.learn, () => {
+      self.switch(studyView.name);
+    })
+    this.viewMap.set(distributionView.name, distributionView);
 
     this.switch(studyView.name);
   }
