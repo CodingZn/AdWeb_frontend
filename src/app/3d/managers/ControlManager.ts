@@ -4,12 +4,16 @@ import { Camera, Vector3 } from "three";
 import { IMoveState } from "../utils/Moveable";
 import { Disposable, IEventDispatcher } from "../utils/Disposable";
 import { assign } from "lodash";
+import { Chat } from "../lib/Chat";
+import { Player } from "../characters/Player";
+import {Gen} from "../utils/Gen";
+
 
 export interface IControlManagerOption {
   container?: HTMLElement,
   showJoyStick?: Boolean,
   controlPointer?: Boolean,
-  camera?: Camera,
+  camera?: Camera
 }
 
 export const EventType = {
@@ -52,6 +56,9 @@ export class ControlManager extends Disposable {
   private destoryers: IDestroyer[] = [];
   private customDestoryers: IDestroyer[] = [];
 
+  private _gen: Gen;
+  private _isGen: boolean = false;
+
   constructor(options: IControlManagerOption) {
     super();
     this.options = assign(defaultControlManagerOptions(), options);
@@ -61,6 +68,7 @@ export class ControlManager extends Disposable {
         if (self.mounted) { self.unmount(); }
       }
     })
+    this._gen = new Gen();
   }
 
   public get locked() { return this.pointerLockControls?.isLocked || false; }
@@ -91,16 +99,16 @@ export class ControlManager extends Disposable {
     this.onSwitchPerpective = onSwitchPerpective;
 
     const { container, showJoyStick, controlPointer } = this.options;
-    
+
     // 手柄
     if (showJoyStick) {
-      this.joyStick = new JoyStick({ 
-        container, 
+      this.joyStick = new JoyStick({
+        container,
         onMove: (forward: number, turn: number) => onMove && onMove({ forward, right: turn, up: 0 })
       });
       this.joyStick.mount();
     }
-    
+
     // 视角锁定控制
     if (controlPointer) {
       if (this.pointerLockControls !== null) {
@@ -126,9 +134,9 @@ export class ControlManager extends Disposable {
   }
 
   public get direction() {
-    return this.pointerLockControls?.getDirection(new Vector3()).normalize() 
+    return this.pointerLockControls?.getDirection(new Vector3()).normalize()
         || this.camera?.getWorldDirection(new Vector3())
-        || new Vector3();; 
+        || new Vector3();;
   }
 
   public lock() {
@@ -159,16 +167,16 @@ export class ControlManager extends Disposable {
       case 'w':
       case 'ArrowUp':
          moveState.forward = 1; break;
-      case 's': 
-      case 'ArrowDown': 
+      case 's':
+      case 'ArrowDown':
         moveState.back = 1; break;
       case 'a':
       case 'ArrowLeft':
         moveState.left = 1; break;
-      case 'd': 
-      case 'ArrowRight': 
+      case 'd':
+      case 'ArrowRight':
         moveState.right = 1; break;
-      case ' ': 
+      case ' ':
         moveState.up = 1; break;
     }
     this._onMove();
@@ -177,19 +185,19 @@ export class ControlManager extends Disposable {
   private onKeyUp(e: Event) {
     const { moveState } = this;
     switch((e as KeyboardEvent).key) {
-      case 'w': 
+      case 'w':
       case 'ArrowUp':
         moveState.forward = 0; break;
-      case 's': 
-      case 'ArrowDown': 
+      case 's':
+      case 'ArrowDown':
         moveState.back = 0; break;
       case 'a':
       case 'ArrowLeft':
         moveState.left = 0; break;
-      case 'd': 
-      case 'ArrowRight': 
+      case 'd':
+      case 'ArrowRight':
         moveState.right = 0; break;
-      case ' ': 
+      case ' ':
         moveState.up = 0; break;
       case 'q':
         this._onSwitchPerpective(); break;
@@ -211,7 +219,7 @@ export class ControlManager extends Disposable {
 
   /**
    * 不会销毁用户挂载的事件
-   * @returns 
+   * @returns
    */
   private _unmount() {
     if (!this.mounted) {
@@ -249,5 +257,18 @@ export class ControlManager extends Disposable {
     if (this.joyStick !== null) {
       this.joyStick.mount();
     }
+  }
+
+
+  public _onGen(_fn: (data:any)=>any){
+    const { container } = this.options;
+    if (this._isGen === false) {
+      container!.appendChild(this._gen.dom);
+      this._gen.onSend = _fn;
+    } else {
+      container!.removeChild(this._gen.dom);
+      this._gen.onSend = null;
+    }
+    this._isGen = !this._isGen;
   }
 }
