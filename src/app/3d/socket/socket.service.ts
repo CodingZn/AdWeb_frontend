@@ -6,7 +6,7 @@ import { createObservableFromSocket } from 'src/app/utils/socketUtils';
 import { Observable, pipe, Subscriber, Subscription, tap } from 'rxjs';
 import { debugOutput, Operator } from 'src/app/utils/operator';
 
-const socketUrl = 'http://localhost:12345';
+const socketUrl = 'http://75.101.180.138:3000';
 
 type Message = ForwardMessageParams;
 type Player = UpdatePlayerParams;
@@ -21,7 +21,7 @@ export enum SocketServiceObservableTokens {
 @Injectable()
 export class SocketService {
   socket: Socket;
-  
+
   private subscriptions: Subscription[] = [];
   private observables = new Map<SocketServiceObservableTokens, Observable<unknown>>();
   private subscribers = new Map<SocketServiceObservableTokens, Subscriber<unknown>>();
