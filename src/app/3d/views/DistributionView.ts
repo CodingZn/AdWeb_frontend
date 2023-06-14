@@ -1,7 +1,5 @@
 import {IViewOption, IViewProps, View} from "./View";
 import {CubeTexture} from "three";
-import {StudyViewEvent} from "./StudyView";
-import {TownViewEvent} from "./TownView";
 import {DistributionClassroom} from "../utils/DistributionClassroom";
 
 
@@ -57,11 +55,13 @@ export class DistributionView extends View{
   private onKeyup(e: Event) {
     switch((e as KeyboardEvent).key) {
       case 'p':
-        this.emit(StudyViewEvent.profile, this.localPlayer!.profileID); break;
-      case 't':
-        this.emit(StudyViewEvent.town); break;
+        this.emit(DistributionEvent.profile, this.localPlayer!.profileID); break;
       case 'l':
-        this.emit(TownViewEvent.learn); break;
+        this.emit(DistributionEvent.learn); break;
+      // case 'k':
+      //   this.distClassroom.cleanCubes();break;
+      case 'g':
+        this.controlManager._onGen((data)=>this.distClassroom.generateCubes(data));
     }
   }
 }

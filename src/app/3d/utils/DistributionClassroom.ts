@@ -15,6 +15,7 @@ import {
 } from "three";
 import {Light} from "./Light";
 import {TEACHING_BUILDING_DEPTH, TEACHING_BUILDING_FLOOR_HEIGHT, TEACHING_BUILDING_WIDTH} from "./TeachingBuilding";
+import {Cubes} from "./Cubes";
 
 const DELTA = 5;
 
@@ -39,6 +40,7 @@ export class DistributionClassroom extends Renderable {
   // private desks: Desk[][];
   // private platform: Mesh;
   // private board: Mesh;
+  private cubes: Cubes;
 
   public override get colliders() {
     return this._colliders;
@@ -143,10 +145,13 @@ export class DistributionClassroom extends Renderable {
     });
     this.add(this.light)
 
-    this.generateCubes(DistributionClassroom.generateSampleDistribution());
+    this.cubes = new Cubes();
+
+
   }
 
-  private generateCubes(heights:number[][]){
+  public generateCubes(heights:number[][]){
+    this.cleanCubes();
     for (let i = 0; i < CUBE_NUM; i++) {
       for (let j = 0; j < CUBE_NUM; j++) {
         let mesh: Mesh = new Mesh(new BoxGeometry(CUBE_WIDTH, heights[i][j]*CUBE_HEIGHT, CUBE_WIDTH),
@@ -154,9 +159,20 @@ export class DistributionClassroom extends Renderable {
         let pos:Vector3 = new Vector3().add(CUBE_BASE_POS)
           .add(new Vector3(CUBE_WIDTH*i, heights[i][j]*CUBE_HEIGHT/2, CUBE_WIDTH*j));
         mesh.position.add(pos);
-        this.box.add(mesh);
+        this.cubes.add(mesh);
       }
     }
+    this.add(this.cubes)
+  }
+
+  public generateSampleCubes(){
+    this.generateCubes(DistributionClassroom.generateSampleDistribution());
+  }
+
+  public cleanCubes(){
+    // console.log("clean cubes");
+    this.remove(this.cubes);
+    this.cubes = new Cubes();
   }
 
   // max height: CUBE_NUM
