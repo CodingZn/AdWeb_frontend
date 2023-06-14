@@ -56,7 +56,7 @@ export class TownView extends View {
 
   public beforeDestoryed() {}
 
-  public render(dt: number) {
+  public override render(dt: number) {
     if (this.background !== null && this.scene !== null) {
       this.scene.background = this.background;
     }
@@ -69,9 +69,7 @@ export class TownView extends View {
 
     for (const [_, player] of this.playerMap) this.add(player);
 
-    this.move(dt);
-
-    this.sceneManager.render(this.camera);
+    super.render(dt);
   }
 
   private onKeyup(e: Event) {

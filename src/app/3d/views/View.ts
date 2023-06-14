@@ -175,8 +175,6 @@ export abstract class View extends Disposable {
     this.perspectiveManager.switch(null);
   }
 
-  public abstract render(dt: number): any;
-
   /**
    * 绑定事件
    * @param eventName 
@@ -276,7 +274,7 @@ export abstract class View extends Disposable {
    * @param dt 
    * @returns 
    */
-  protected move(dt: number) {
+  public render(dt: number) {
     if (this.localPlayer === null) return;
     const { active } = this.perspectiveManager
     if (active === PerspectiveType.FIRST) {
@@ -295,5 +293,7 @@ export abstract class View extends Disposable {
     
     this.movables.forEach(v => v.move(dt, this.sceneManager.renderables));    
     this.animatables.forEach(v => v.animate(dt));
+
+    this.sceneManager.render(this.camera);
   }
 }

@@ -15,7 +15,7 @@ export interface IAnimatableParams extends IRenderableParams {
   actionMap?: Map<string, AnimationClip>,
 }
 
-export class Animatable extends Renderable implements IAnimatable {
+export abstract class Animatable extends Renderable implements IAnimatable {
   public mixer: AnimationMixer | null = null;
   protected actionMap: Map<string, AnimationClip>;
   private _idle: AnimationClip | null = null;

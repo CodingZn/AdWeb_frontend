@@ -22,7 +22,7 @@ export interface IMoveable {
   move: (dt: number, colliders?: Iterable<Renderable>) => any,
 }
 
-export class Moveable extends Renderable implements IMoveable {
+export abstract class Moveable extends Renderable implements IMoveable {
   protected moveState: IMoveState = { forward: 0, right: 0, up: 0 };
 
   public static collide(pos: IPosition, dir: { x?: number, y?: number, z?: number }, renderables?: Iterable<Renderable>, distance?: number) {

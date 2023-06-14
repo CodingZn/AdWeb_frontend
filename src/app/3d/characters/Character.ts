@@ -1,4 +1,4 @@
-import { assign, random } from "lodash";
+import { assign } from "lodash";
 import {  AnimationClip, AnimationMixer, CylinderGeometry, DoubleSide, Mesh, MeshBasicMaterial, MeshLambertMaterial, Object3D, Texture, Vector3 } from "three";
 import { AssetManager } from "../managers/AssetManager";
 import { AnimateMoveable, IAnimateMoveableParams, IAnimateMoveableState } from "../utils/AnimateMoveable";
