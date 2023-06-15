@@ -16,6 +16,7 @@ import {
 import {Light} from "./Light";
 import {TEACHING_BUILDING_DEPTH, TEACHING_BUILDING_FLOOR_HEIGHT, TEACHING_BUILDING_WIDTH} from "./TeachingBuilding";
 import {Cubes} from "./Cubes";
+import {random} from "lodash";
 
 const DELTA = 5;
 
@@ -141,7 +142,10 @@ export class DistributionClassroom extends Renderable {
       this.box.add(border);
     }
     this.light = new Light({
-      intensity: 1
+      intensity: 2,
+      x: CLASSROOM_DEPTH- DELTA,
+      y: CLASSROOM_HEIGHT- DELTA,
+      z: CLASSROOM_WIDTH- DELTA,
     });
     this.add(this.light)
 
@@ -155,7 +159,7 @@ export class DistributionClassroom extends Renderable {
     for (let i = 0; i < CUBE_NUM; i++) {
       for (let j = 0; j < CUBE_NUM; j++) {
         let mesh: Mesh = new Mesh(new BoxGeometry(CUBE_WIDTH, heights[i][j]*CUBE_HEIGHT, CUBE_WIDTH),
-          new MeshLambertMaterial());
+          new MeshLambertMaterial({color: random(0x404080, 0x4040af)}));
         let pos:Vector3 = new Vector3().add(CUBE_BASE_POS)
           .add(new Vector3(CUBE_WIDTH*i, heights[i][j]*CUBE_HEIGHT/2, CUBE_WIDTH*j));
         mesh.position.add(pos);

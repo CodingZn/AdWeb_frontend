@@ -8,7 +8,7 @@ export interface ILightParams extends IRenderableParams {
 }
 
 export class Light extends Renderable {
-  constructor(params: ILightParams) { 
+  constructor(params: ILightParams) {
     super(params);
     const color = params.color === undefined ? 0xffffff : params.color;
     const light = new PointLight( color );

@@ -175,7 +175,11 @@ export class Gen {
           this.onSend(data);
         },
         error => {
-          window.alert("请一分钟后再试！")
+          if (error.status == 400){
+            window.alert("请输入正确的参数！")
+          }
+          else
+            window.alert("请一分钟后再试！")
         }
       );
     }
@@ -187,7 +191,11 @@ export class Gen {
           this.onSend(data);
         },
         error => {
-          window.alert("请一分钟后再试！")
+          if (error.status == 400){
+            window.alert("请输入正确的参数！")
+          }
+          else
+            window.alert("请一分钟后再试！")
         }
       );
     }

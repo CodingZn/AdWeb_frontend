@@ -18,6 +18,7 @@ export class DistributionView extends View{
   private now: number = 0;
   private background: CubeTexture | null = null;
   private distClassroom: DistributionClassroom;
+  private updateDist: any;
 
   constructor(option: IViewOption) {
     super(option);
@@ -34,15 +35,16 @@ export class DistributionView extends View{
 
     this.distClassroom = new DistributionClassroom({});
 
-    setInterval(()=>{this.checkChange()}, 1000);
   }
 
   protected beforeDestoryed(): any {
+    clearInterval(this.updateDist);
   }
 
   protected mounted(props?: IViewProps): any {
     this.controlManager.on('keyup', this.onKeyup.bind(this));
     this.localPlayer!.update({ x: 100, y: 100, z: 100 });
+    this.updateDist = setInterval(()=>{this.checkChange()}, 1000);
   }
 
   render(dt: number): any {
@@ -80,6 +82,7 @@ export class DistributionView extends View{
           this.now = data.now;
           this.distClassroom.generateCubes(data.data);
         }
-      })
+      },
+        error => {})
   }
 }
