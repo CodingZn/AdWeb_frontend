@@ -1,61 +1,174 @@
 @startuml Game
 class Game {
-  +views: View[]
+  +viewMap: Map<string, View>
+  -socketService
+  -userSessionService
+  -initManagers()
+  -initSockect()
+  -initPlayer()
+  -initViews()
+  -render()
+  -switch()
 }
 
-abstract class View {
-  +sceneManager: SceneManager
-  +objectManager: ObjectManager
-  +perspectiveManager: PerspectiveManager
-  +controlManager: ControlManager
-  +mount()
+View --o Game
+
+abstract class View { 
+  +localPlayer: LocalPlayer
+  +playerMap: Map<string, Player>
+  +nps: NPC[]; 
   +mount()
   +unmount()
+  {abstract} #mounted()
+  {abstract} #beforeDestory()
   +render(dt)
   +on()
   +off()
-  -emit()
+  +onMove(state: { right, forward })
+  #emit()
 }
 
 class ProfileView {
-
+  +profileID
 }
 
+class TownView {
+  -town
+}
+TownView --> View
+
+class StudyView {
+  -teachingBuilding
+}
+StudyView --> View
+
+class Chat {
+  +to: Player
+  +onSend (message, to) => any
+  +mount()
+  +unmount()
+  +onReceive()
+}
+Chat --o Game
+
+class SocketService {
+  +connect()
+  +disconnect()
+  +sendMessage(message)
+  +updatePlayer(player)
+}
+SocketService --o Game
+
+class UserSessionService {
+  +tokenInfo
+  +profileID
+  -saveToken()
+  -cleanToken()
+  +login(loginRequest)
+  +logout()
+  +getUserInfo()
+  +updateProfile()
+}
+UserSessionService --o Game
+
 class SceneManager {
-  +add(renderable)
+  +add(renderable: Renderable)
+  +remove(renderable)
   +switch(sceneName, { background, ambient, ... })
 }
 
-class ObjectManager {
-  +assetManager
-  +get(name): Renderable
-}
-
 class AssetManager {
-  +get(urls): Promise<any> | Promise<any[]>
+  +get(url): Promise<any> | Promise<any[]>
 }
 
 class PerspectiveManager {
-  +getter camera
+  +camera
   +switch(type, { x, y, z, targetX, targetY, targetZ })
 }
 
 class ControlManager {
+  +update()
+  +mount()
+  +unmount()
+  +lock()
+  +unlock()
   +on(camera)
   +off()
 }
-
-abstract class Renderable {
-  +object
-  +update({ x, y, z, color, width, height, depth, transform, ... })
-  +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
-}
-
-ProfileView --- View
-AssetManager --o ObjectManager
-Renderable --o ObjectManager
-ObjectManager --o View
 SceneManager --o View
 PerspectiveManager --o View
 ControlManager --o View
-View --> Game
+AssetManager --o View
+
+abstract class Renderable {
+  #object: Object3D
+  +state
+  +colliders: Object3D[]
+  +update({ x, y, z, color, width, height, depth, transform, ... })
+  +transform({ scale, rotateX, rotateY, rotateZ, tanslateX, ... })
+  +add(renderable: Renderable)
+  +remove(renderable: Renderable)
+  +onload(resources: any[])
+  +focus()
+  +blur()
+}
+
+abstract class Moveable {
+  +velocity
+  
+  {static} +collide(pos, dir, colliders, distance)
+  +collide(dir, colliders, distance)
+  onMove(state: { forward, right })
+  move(dt: number)
+  
+}
+Moveable --> Renderable
+
+
+abstract class Animatable {
+  +action
+  +actionDuration
+  +setAction(v)
+  +animate(dt: number)
+}
+Animatable --> Renderable
+
+abstract class AnimateMoveable {}
+AnimateMoveable --> Animatable
+AnimateMoveable --> Moveable
+
+abstract class Character {
+  +say(message)
+}
+Character --> AnimateMoveable
+
+class Player {
+  +toSocket()
+  +fromSocket(socket)
+}
+Player --> Character
+
+class LocalPlayer {
+  +checkFocus(targets)
+}
+LocalPlayer --> Player
+
+class NPC {
+  +autoMove(dt: number)
+}
+NPC --> Character
+ProfileView --> View
+Moveable --o View
+Animatable --o View
+LocalPlayer --o View
+Player --o View
+NPC --o View
+
+class Disposable {
+  +_register(disposable: Disposable)
+  +dispose()
+}
+
+
+
+

@@ -47,7 +47,7 @@ export class DistributionView extends View{
     this.updateDist = setInterval(()=>{this.checkChange()}, 1000);
   }
 
-  render(dt: number): any {
+  override render(dt: number): any {
     this.scene!.background = this.background;
 
     this.add(this.localPlayer!);
@@ -56,9 +56,7 @@ export class DistributionView extends View{
 
     this.add(this.distClassroom);
 
-    this.move(dt);
-
-    this.sceneManager.render(this.camera);
+    super.render(dt);
   }
 
   private onKeyup(e: Event) {

@@ -60,7 +60,7 @@ export class ProfileView extends View {
     this.profileID = 0;
   }
 
-  public render(dt: number) {
+  public override render(dt: number) {
     const {
       sceneManager, 
       profiles, 

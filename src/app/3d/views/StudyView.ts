@@ -61,7 +61,7 @@ export class StudyView extends View {
 
   protected beforeDestoryed() {}
 
-  public render(dt: number) {
+  public override render(dt: number) {
     this.scene!.background = this.background;
 
     this.add(this.localPlayer!);
@@ -72,9 +72,7 @@ export class StudyView extends View {
 
     this.add(this.teachingBuilding);
 
-    this.move(dt);
-
-    this.sceneManager.render(this.camera);
+    super.render(dt);
   }
 
   private onKeyup(e: Event) {
