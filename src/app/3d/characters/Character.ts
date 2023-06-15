@@ -187,7 +187,8 @@ export abstract class Character extends AnimateMoveable {
         return Promise.resolve(self.assetManager);
       })
       .then(assetManager => assetManager.get(`images/SimplePeople_${profileName}_Brown.png`))
-      .then((res) => self.onLoad([res]));
+      .then((res) => self.onLoad([res]))
+      .catch(e => console.log(e));
     } else {
       this.action = action;
       super.update(params);

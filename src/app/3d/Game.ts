@@ -196,12 +196,13 @@ export class Game extends Disposable {
         this.onReceive(msg);
       })
     );
-    this._register(addDisposableEventListener(this.container, 'mousedown', () => {
+    this._register(addDisposableEventListener(this.container, 'mousedown', (e: Event) => {
       const player = this.localPlayer.focusedObject
       if (player instanceof Player) {
         this.chat.to = player;
         this.chat.mount(this.container);
         this.managers.controlManager.unlock();
+        e.stopImmediatePropagation();
       } else {
         this.chat.to = undefined;
       }

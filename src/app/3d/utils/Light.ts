@@ -23,5 +23,6 @@ export class Light extends Renderable {
     light.shadow.mapSize.height = 1024;
     this.object.clear();
     this.object = light;
+    super.update(params);
   }
 }

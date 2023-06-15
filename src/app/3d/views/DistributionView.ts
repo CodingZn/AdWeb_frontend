@@ -69,6 +69,7 @@ export class DistributionView extends View{
       //   this.distClassroom.cleanCubes();break;
       case 'g':
         this.controlManager._onGen((data)=>this.distClassroom.generateCubes(data));
+        this.controlManager.unlock();
     }
   }
 
