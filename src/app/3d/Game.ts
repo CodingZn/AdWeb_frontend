@@ -17,6 +17,7 @@ import { IPlayerUpdateParams, Player } from "./characters/Player";
 import { addDisposableEventListener, Disposable } from "./utils/Disposable";
 import { Chat } from "./lib/Chat";
 import {DistributionEvent, DistributionView} from "./views/DistributionView";
+import { Guide } from "./Guide";
 
 interface IGameOption {
   container?: HTMLElement,
@@ -44,6 +45,8 @@ export class Game extends Disposable {
   private userSessionService!: UserSessionService;
   private subscriptions: Subscription[] = [];
   private chat!: Chat;
+  private guide!: Guide;
+  private guideTimer: null | any = null;
   private onExit: () => any;
 
   private clock: Clock = new Clock();
@@ -83,6 +86,14 @@ export class Game extends Disposable {
     }
     if (view !== undefined) {
       this.activeView = view.mount(props);
+      this.guide.unmount().mount(name);
+      if (this.guideTimer !== null) {
+        clearTimeout(this.guideTimer)
+      }
+      this.guideTimer = setTimeout(() => {
+        this.guide.unmount();
+        this.guideTimer = null;
+      }, 5000)
       const state = this.localPlayerStateMap.get(name);
       this.localPlayer.update(state || {});
     } else {
@@ -216,12 +227,13 @@ export class Game extends Disposable {
           this.chat.mount(this.container);
           this.managers.controlManager.unlock();
         }
-      } else if (key === 'Escape' && !this.managers.controlManager.locked) {
+      } else if (key === 'Escape' && !this.managers.controlManager.locked && this.activeView?.name !== 'profile') {
         if (window.confirm('确认退出游戏？')) {
           this.onExit();
         }
       }
     }))
+    this.guide = this._register(new Guide(this.container));
   }
 
   private initPlayer() {
@@ -250,7 +262,7 @@ export class Game extends Disposable {
       self.switch(this.prevView!.name);
     });
     profileView.on(ProfileViewEvent.exit, () => {
-      self.switch(townView.name);
+      self.switch(this.prevView!.name);
     })
     this.localPlayerStateMap.set(profileView.name, {});
     this.viewMap.set(profileView.name, profileView);
